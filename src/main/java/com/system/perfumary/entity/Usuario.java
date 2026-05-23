@@ -8,6 +8,8 @@ import lombok.*;
 @MappedSuperclass
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,15 +22,11 @@ public abstract class Usuario {
     @Enumerated(EnumType.STRING)
     private NivelAcesso nivelAcesso;
 
-    public void realizarCadastro(String nome, String email, String senha, NivelAcesso nivelAcesso) {
-        return;
-    }
-
     public void realizarLogin(String email, String senha) {
-        return;
+        // Implementação básica ou placeholder
     }
 
     public void alterarSenha(String novaSenha) {
-        return;
+        this.senha = novaSenha;
     }
 }

@@ -35,6 +35,15 @@ public class GerenteService {
         gerenteRepository.save(gerente);
     }
 
+    public Gerente atualizarPromocao(Long promocaoId, String nome, double desconto, Date dataInicio, Date dataFim) {
+        promocaoService.atualizar(promocaoId, nome, desconto, dataInicio, dataFim);
+        return null; // A controller vai buscar o gerente atualizado
+    }
+
+    public Gerente buscarPorId(Long id) {
+        return gerenteRepository.findById(id).orElseThrow(() -> new RuntimeException("Gerente não encontrado"));
+    }
+
     public void excluirGerente(Long id) {
         gerenteRepository.deleteById(id);
     }

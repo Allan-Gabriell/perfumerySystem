@@ -1,9 +1,9 @@
 package com.system.perfumary.repository;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.system.perfumary.entity.Gerente;
 
-public interface GerenteRepository extends CrudRepository<Gerente, Long> {
+public interface GerenteRepository extends JpaRepository<Gerente, Long> {
 
 }

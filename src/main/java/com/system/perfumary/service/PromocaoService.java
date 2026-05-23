@@ -21,6 +21,16 @@ public class PromocaoService {
         return repository.save(promocao);
     }
 
+    public Promocao atualizar(Long id, String nome, double desconto, Date dataInicio, Date dataFim) {
+        Promocao promocao = buscarPromocao(id);
+        if (promocao == null) throw new RuntimeException("Promoção não encontrada");
+        promocao.setNome(nome);
+        promocao.setDesconto(desconto);
+        promocao.setDataInicio(dataInicio);
+        promocao.setDataFim(dataFim);
+        return repository.save(promocao);
+    }
+
     public void excluirPromocao(Long id) {
         repository.deleteById(id);
     }

@@ -1,15 +1,15 @@
 package com.system.perfumary.entity;
 
 import java.util.Date;
-import com.system.perfumary.enums.TipoRelatorio;
+import java.util.List;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,31 +17,36 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "relatorio")
+@Table(name = "venda")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Relatorio {
+public class Venda {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private TipoRelatorio tipo;
-
-    private Date dataInicio;
-    private Date dataFim;
+    private Date data;
+    private Double valorTotal;
 
     @ManyToOne
-    @JoinColumn(name = "gerente_id")
-    private Gerente gerente;
+    @JoinColumn(name = "cliente_id")
+    private Cliente cliente;
 
-    public void gerarRelatorioVendas() {
+    @ManyToOne
+    @JoinColumn(name = "vendedor_id")
+    private Vendedor vendedor;
+
+    @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemVenda> itens;
+
+    public void registrar() {
         // Implementação
     }
 
-    public void gerarRelatorioProdutos() {
+    public void calcularTotal() {
         // Implementação
     }
 }

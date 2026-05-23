@@ -7,6 +7,7 @@ import com.system.perfumary.dto.GerenteRequest;
 import com.system.perfumary.dto.PromocaoRequest;
 import com.system.perfumary.entity.Gerente;
 import com.system.perfumary.service.GerenteService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/gerentes")
@@ -19,7 +20,7 @@ public class GerenteController {
     }
 
     @PostMapping("/cadastrar-gerente")
-    public String cadastrarGerente(@RequestBody GerenteRequest request) {
+    public String cadastrarGerente(@Valid @RequestBody GerenteRequest request) {
 
         gerenteService.cadastrarGerente(
                 request.getNome(),
@@ -33,7 +34,7 @@ public class GerenteController {
     @PostMapping("/{id}/promocoes")
     public Gerente cadastrarPromocao(
         @PathVariable Long id,
-        @RequestBody PromocaoRequest request) {
+        @Valid @RequestBody PromocaoRequest request) {
 
         return gerenteService.cadastrarPromocao(
                 id,
@@ -52,6 +53,16 @@ public class GerenteController {
         gerenteService.alterarSenhaGerente(id, request.getNovaSenha());
 
         return "Senha alterada com sucesso!";
+    }
+
+    @PutMapping("/{gerenteId}/promocoes/{promocaoId}")
+    public Gerente atualizarPromocao(
+            @PathVariable Long gerenteId,
+            @PathVariable Long promocaoId,
+            @Valid @RequestBody PromocaoRequest request) {
+
+        gerenteService.atualizarPromocao(promocaoId, request.getNome(), request.getDesconto(), request.getDataInicio(), request.getDataFim());
+        return gerenteService.buscarPorId(gerenteId);
     }
 
     @DeleteMapping("/{id}/deletar")

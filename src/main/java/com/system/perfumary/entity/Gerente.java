@@ -1,7 +1,7 @@
 package com.system.perfumary.entity;
 
 import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -25,4 +25,8 @@ public class Gerente extends Usuario {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "gerente_id")
     private List<Promocao> promocoes;
+
+    @OneToMany(mappedBy = "gerente")
+    @JsonIgnore
+    private List<Relatorio> relatorios;
 }

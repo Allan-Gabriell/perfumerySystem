@@ -1,10 +1,7 @@
 package com.system.perfumary.entity;
 
-import java.util.Date;
-import com.system.perfumary.enums.TipoRelatorio;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,31 +14,30 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "relatorio")
+@Table(name = "item_venda")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Relatorio {
+public class ItemVenda {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private TipoRelatorio tipo;
-
-    private Date dataInicio;
-    private Date dataFim;
+    private Integer quantidade;
+    private Double subtotal;
 
     @ManyToOne
-    @JoinColumn(name = "gerente_id")
-    private Gerente gerente;
+    @JoinColumn(name = "venda_id")
+    @JsonIgnore
+    private Venda venda;
 
-    public void gerarRelatorioVendas() {
-        // Implementação
-    }
+    @ManyToOne
+    @JoinColumn(name = "produto_id")
+    private Produto produto;
 
-    public void gerarRelatorioProdutos() {
+    public void calcularSubtotal() {
         // Implementação
     }
 }

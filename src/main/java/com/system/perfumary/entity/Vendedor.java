@@ -11,22 +11,26 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "administrador")
+@Table(name = "vendedor")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Administrador extends Usuario {
+public class Vendedor extends Usuario {
 
-    @OneToMany(mappedBy = "administrador")
+    @OneToMany(mappedBy = "vendedor")
     @JsonIgnore
-    private List<Produto> produtos;
+    private List<Venda> vendas;
 
-    public void gerenciarUsuarios() {
+    public void registrarVenda() {
         // Implementação
     }
 
-    public void cadastrarProdutos() {
+    public void cadastrarCliente() {
+        // Implementação
+    }
+
+    public void consultarProdutos() {
         // Implementação
     }
 }
