@@ -9,7 +9,7 @@ export default function Login() {
   function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     if (usuario && senha) {
-      navigate('/produtos')
+      navigate('/dashboard')
     }
   }
 
