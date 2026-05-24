@@ -1,60 +1,135 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const menus = [
-    { icon: '🏷️', label: 'Cadastro de Produto', path: '/produtos' },
-    { icon: '📦', label: 'Listagem de Produtos', path: '/listagem' },
-    { icon: '👤', label: 'Cadastro de Cliente', path: '/clientes' },
-    { icon: '🕐', label: 'Histórico de Compras', path: '/historico' },
-    { icon: '🛒', label: 'Registro de Venda', path: '/vendas' },
-    { icon: '🏷️', label: 'Promoções', path: '/promocoes' },
-    { icon: '📊', label: 'Relatório de Vendas', path: '/relatorio' },
-  ]
+  const cards = [
+    {
+      titulo: "Produtos",
+      texto: "Visualizar produtos cadastrados no sistema.",
+      rota: "/produtos",
+    },
+    {
+      titulo: "Cadastrar produto",
+      texto: "Inserir novos produtos no catálogo.",
+      rota: "/produtos/cadastrar",
+    },
+    {
+      titulo: "Registrar venda",
+      texto: "Criar uma venda com produtos cadastrados.",
+      rota: "/vendas/registrar",
+    },
+    {
+      titulo: "Relatório de vendas",
+      texto: "Acompanhar métricas e histórico de vendas.",
+      rota: "/relatorios/vendas",
+    },
+    {
+      titulo: "Cadastrar cliente",
+      texto: "Adicionar clientes ao sistema.",
+      rota: "/clientes/cadastrar",
+    },
+    {
+      titulo: "Cadastrar promoção",
+      texto: "Criar promoções vinculadas a um gerente.",
+      rota: "/promocoes/cadastrar",
+    },
+  ];
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.topbar}>
-          <span>💧 Perfumaria — Painel</span>
-          <button style={styles.navBtn} onClick={() => navigate('/login')}>Sair</button>
-        </div>
-        <div style={styles.body}>
-          <div style={styles.resumo}>
-            <div style={styles.card}><div style={styles.cardLabel}>Vendas hoje</div><div style={styles.cardValue}>4</div></div>
-            <div style={styles.card}><div style={styles.cardLabel}>Faturamento</div><div style={styles.cardValue}>R$ 719,40</div></div>
-            <div style={styles.card}><div style={styles.cardLabel}>Clientes</div><div style={styles.cardValue}>12</div></div>
-            <div style={styles.card}><div style={styles.cardLabel}>Produtos</div><div style={styles.cardValue}>5</div></div>
+    <main style={styles.page}>
+      <section style={styles.container}>
+        <header style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Aura Blue</h1>
+            <p style={styles.subtitle}>Painel administrativo da perfumaria</p>
           </div>
-          <p style={styles.sectionTitle}>Acesso rápido</p>
-          <div style={styles.grid}>
-            {menus.map((m, i) => (
-              <button key={i} style={styles.menuBtn} onClick={() => navigate(m.path)}>
-                <span style={styles.menuIcon}>{m.icon}</span>
-                <span style={styles.menuLabel}>{m.label}</span>
+
+          <button style={styles.logout} onClick={() => navigate("/login")}>
+            Sair
+          </button>
+        </header>
+
+        <div style={styles.grid}>
+          {cards.map((card) => (
+            <article key={card.rota} style={styles.card}>
+              <h2 style={styles.cardTitle}>{card.titulo}</h2>
+              <p style={styles.cardText}>{card.texto}</p>
+
+              <button style={styles.button} onClick={() => navigate(card.rota)}>
+                Acessar
               </button>
-            ))}
-          </div>
+            </article>
+          ))}
         </div>
-      </div>
-    </div>
-  )
+      </section>
+    </main>
+  );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 },
-  container: { background: '#fff', borderRadius: 12, width: '100%', maxWidth: 680, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', overflow: 'hidden' },
-  topbar: { background: '#534AB7', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff', fontSize: 15, fontWeight: 500 },
-  navBtn: { background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' },
-  body: { padding: '20px' },
-  resumo: { display: 'flex', gap: 12, marginBottom: 24 },
-  card: { flex: 1, background: '#f9f9f9', borderRadius: 10, padding: '14px 16px' },
-  cardLabel: { fontSize: 12, color: '#888', marginBottom: 6 },
-  cardValue: { fontSize: 22, fontWeight: 500, color: '#534AB7' },
-  sectionTitle: { fontSize: 14, fontWeight: 500, color: '#333', marginBottom: 12 },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 },
-  menuBtn: { background: '#f9f9f9', border: '1px solid #eee', borderRadius: 10, padding: '16px 12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 },
-  menuIcon: { fontSize: 24 },
-  menuLabel: { fontSize: 12, color: '#444', textAlign: 'center' },
-}
+  page: {
+    minHeight: "100vh",
+    background:
+      "radial-gradient(circle at top left, rgba(14,165,233,0.28), transparent 35%), linear-gradient(135deg, #020617, #07111f, #000)",
+    color: "#fff",
+    padding: 24,
+    fontFamily: "Inter, Arial, sans-serif",
+  },
+  container: {
+    maxWidth: 1100,
+    margin: "0 auto",
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 20,
+    alignItems: "center",
+    marginBottom: 28,
+  },
+  title: {
+    margin: 0,
+    fontSize: 38,
+  },
+  subtitle: {
+    margin: "6px 0 0",
+    color: "#94a3b8",
+  },
+  logout: {
+    border: "1px solid rgba(148,163,184,0.25)",
+    background: "rgba(15,23,42,0.8)",
+    color: "#fff",
+    padding: "10px 16px",
+    borderRadius: 999,
+    cursor: "pointer",
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: 18,
+  },
+  card: {
+    background: "rgba(15,23,42,0.82)",
+    border: "1px solid rgba(148,163,184,0.18)",
+    borderRadius: 24,
+    padding: 24,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+  },
+  cardTitle: {
+    margin: 0,
+    fontSize: 22,
+  },
+  cardText: {
+    color: "#cbd5e1",
+    lineHeight: 1.6,
+  },
+  button: {
+    border: "none",
+    borderRadius: 999,
+    padding: "12px 18px",
+    background: "linear-gradient(135deg, #38bdf8, #2563eb)",
+    color: "#020617",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+};

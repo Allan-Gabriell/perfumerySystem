@@ -1,78 +1,186 @@
-import { useNavigate } from 'react-router-dom'
-
-const vendas = [
-  { data: '24/05/2025', cliente: 'Maria Silva', produtos: 'Floratta Rose, Glamour', total: 169.80 },
-  { data: '23/05/2025', cliente: 'João Santos', produtos: 'Malbec Gold', total: 149.90 },
-  { data: '22/05/2025', cliente: 'Ana Lima', produtos: 'Una Intenso', total: 199.90 },
-  { data: '20/05/2025', cliente: 'Carlos Souza', produtos: 'Lily, Glamour', total: 199.80 },
-]
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import type {
+  RelatorioApi,
+} from "../services/api";
+import {
+  API_URL,
+  formatarRelatorio,
+} from "../services/api";
 
 export default function RelatorioVendas() {
-  const navigate = useNavigate()
-  const total = vendas.reduce((acc, v) => acc + v.total, 0)
+  const navigate = useNavigate();
+
+  const [relatorio, setRelatorio] = useState("");
+  const [titulo, setTitulo] = useState("Relatórios do sistema");
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState("");
+
+  async function gerarRelatorioVendas() {
+    try {
+      setCarregando(true);
+      setErro("");
+      setTitulo("Relatório de vendas");
+
+      const response = await fetch(`${API_URL}/relatorios/vendas`);
+
+      if (!response.ok) {
+        throw new Error("Erro ao gerar relatório de vendas.");
+      }
+
+      const data: RelatorioApi = await response.json();
+      setRelatorio(formatarRelatorio(data));
+    } catch (error) {
+      console.error(error);
+      setErro("Não foi possível carregar o relatório de vendas.");
+      setRelatorio("");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function gerarRelatorioProdutos() {
+    try {
+      setCarregando(true);
+      setErro("");
+      setTitulo("Relatório de produtos");
+
+      const response = await fetch(`${API_URL}/relatorios/produtos`);
+
+      if (!response.ok) {
+        throw new Error("Erro ao gerar relatório de produtos.");
+      }
+
+      const data: RelatorioApi = await response.json();
+      setRelatorio(formatarRelatorio(data));
+    } catch (error) {
+      console.error(error);
+      setErro("Não foi possível carregar o relatório de produtos.");
+      setRelatorio("");
+    } finally {
+      setCarregando(false);
+    }
+  }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.topbar}>
-          <span>📊 Relatório de vendas</span>
-          <button style={styles.navBtn} onClick={() => navigate('/dashboard')}>← Voltar</button>
-        </div>
-        <div style={styles.body}>
-          <div style={styles.cards}>
-            <div style={styles.card}>
-              <div style={styles.cardLabel}>Total de vendas</div>
-              <div style={styles.cardValue}>{vendas.length}</div>
-            </div>
-            <div style={styles.card}>
-              <div style={styles.cardLabel}>Faturamento</div>
-              <div style={styles.cardValue}>R$ {total.toFixed(2)}</div>
-            </div>
-            <div style={styles.card}>
-              <div style={styles.cardLabel}>Ticket médio</div>
-              <div style={styles.cardValue}>R$ {(total / vendas.length).toFixed(2)}</div>
-            </div>
+    <main style={styles.page}>
+      <section style={styles.container}>
+        <header style={styles.header}>
+          <div>
+            <h1 style={styles.title}>{titulo}</h1>
+            <p style={styles.subtitle}>
+              Consulta das rotas GET /relatorios/vendas e GET /relatorios/produtos.
+            </p>
           </div>
-          <table style={styles.table}>
-            <thead>
-              <tr style={styles.thead}>
-                <th style={styles.th}>Data</th>
-                <th style={styles.th}>Cliente</th>
-                <th style={styles.th}>Produtos</th>
-                <th style={styles.th}>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vendas.map((v, i) => (
-                <tr key={i} style={i % 2 === 0 ? styles.trEven : styles.trOdd}>
-                  <td style={styles.td}>{v.data}</td>
-                  <td style={styles.td}>{v.cliente}</td>
-                  <td style={styles.td}>{v.produtos}</td>
-                  <td style={styles.td}><strong>R$ {v.total.toFixed(2)}</strong></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+          <button style={styles.secondaryButton} onClick={() => navigate("/dashboard")}>
+            ← Voltar
+          </button>
+        </header>
+
+        <div style={styles.actions}>
+          <button style={styles.primaryButton} onClick={gerarRelatorioVendas}>
+            Gerar relatório de vendas
+          </button>
+
+          <button style={styles.primaryButton} onClick={gerarRelatorioProdutos}>
+            Gerar relatório de produtos
+          </button>
         </div>
-      </div>
-    </div>
-  )
+
+        {erro && <div style={styles.warning}>{erro}</div>}
+
+        <section style={styles.reportBox}>
+          {carregando ? (
+            <p>Carregando relatório...</p>
+          ) : relatorio ? (
+            <pre style={styles.pre}>{relatorio}</pre>
+          ) : (
+            <p style={styles.empty}>Nenhum relatório gerado ainda.</p>
+          )}
+        </section>
+      </section>
+    </main>
+  );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 },
-  container: { background: '#fff', borderRadius: 12, width: '100%', maxWidth: 720, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', overflow: 'hidden' },
-  topbar: { background: '#534AB7', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff', fontSize: 15, fontWeight: 500 },
-  navBtn: { background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' },
-  body: { padding: '20px' },
-  cards: { display: 'flex', gap: 12, marginBottom: 20 },
-  card: { flex: 1, background: '#f9f9f9', borderRadius: 10, padding: '14px 16px' },
-  cardLabel: { fontSize: 12, color: '#888', marginBottom: 6 },
-  cardValue: { fontSize: 20, fontWeight: 500, color: '#534AB7' },
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
-  thead: { background: '#f9f9f9' },
-  th: { padding: '10px 12px', textAlign: 'left', color: '#666', fontWeight: 500, borderBottom: '1px solid #eee' },
-  td: { padding: '10px 12px', color: '#333' },
-  trEven: { background: '#fff' },
-  trOdd: { background: '#fafafa' },
-}
+  page: {
+    minHeight: "100vh",
+    background:
+      "radial-gradient(circle at top left, rgba(14,165,233,0.24), transparent 35%), linear-gradient(135deg, #020617, #07111f, #000)",
+    color: "#fff",
+    padding: 24,
+    fontFamily: "Inter, Arial, sans-serif",
+  },
+  container: {
+    maxWidth: 900,
+    margin: "0 auto",
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 18,
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginBottom: 24,
+  },
+  title: {
+    margin: 0,
+    fontSize: 36,
+  },
+  subtitle: {
+    color: "#94a3b8",
+    margin: "6px 0 0",
+  },
+  actions: {
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+    marginBottom: 18,
+  },
+  primaryButton: {
+    border: "none",
+    borderRadius: 999,
+    padding: "12px 18px",
+    background: "linear-gradient(135deg, #38bdf8, #2563eb)",
+    color: "#020617",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+  secondaryButton: {
+    border: "1px solid rgba(148,163,184,0.25)",
+    borderRadius: 999,
+    padding: "12px 18px",
+    background: "rgba(15,23,42,0.8)",
+    color: "#fff",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+  reportBox: {
+    minHeight: 280,
+    background: "rgba(15,23,42,0.86)",
+    border: "1px solid rgba(148,163,184,0.18)",
+    borderRadius: 24,
+    padding: 24,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.28)",
+  },
+  pre: {
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    color: "#dbeafe",
+    fontFamily: "inherit",
+    lineHeight: 1.8,
+  },
+  empty: {
+    color: "#94a3b8",
+  },
+  warning: {
+    padding: 18,
+    borderRadius: 16,
+    background: "rgba(239,68,68,0.12)",
+    border: "1px solid rgba(248,113,113,0.28)",
+    color: "#fecaca",
+    marginBottom: 18,
+  },
+};

@@ -1,186 +1,89 @@
-// API configuration for backend communication
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+export const API_URL = "http://localhost:8080";
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
+export type ProdutoApi = {
+  id?: number;
+  idProduto?: number;
+  nome: string;
+  categoria: string;
+  marca: string;
+  preco: number;
+  descricao: string;
+  imagemUrl?: string | null;
+};
+
+export type Produto = {
+  id: number;
+  nome: string;
+  categoria: string;
+  marca: string;
+  preco: number;
+  descricao: string;
+  imagem: string;
+};
+
+export type ItemCarrinho = {
+  produto: Produto;
+  quantidade: number;
+};
+
+export type RelatorioApi = Record<string, unknown>;
+
+export const imagensProdutos = [
+  "https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1629732047848-50219e9c5aef?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=900&q=80",
+];
+
+export function formatarPreco(valor: number): string {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }
 
-class ApiService {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
-  }
-
-  // Produtos
-  async getProdutos(): Promise<any[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/produtos`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Erro ao buscar produtos");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return [];
-    }
-  }
-
-  async getProdutoById(id: number): Promise<any> {
-    try {
-      const response = await fetch(`${this.baseUrl}/produtos/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Erro ao buscar produto");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return null;
-    }
-  }
-
-  async criarProduto(produto: any): Promise<any> {
-    try {
-      const response = await fetch(`${this.baseUrl}/produtos`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(produto),
-      });
-      if (!response.ok) throw new Error("Erro ao criar produto");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return null;
-    }
-  }
-
-  async atualizarProduto(id: number, produto: any): Promise<any> {
-    try {
-      const response = await fetch(`${this.baseUrl}/produtos/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(produto),
-      });
-      if (!response.ok) throw new Error("Erro ao atualizar produto");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return null;
-    }
-  }
-
-  async deletarProduto(id: number): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseUrl}/produtos/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Erro ao deletar produto");
-      return true;
-    } catch (error) {
-      console.error("Erro:", error);
-      return false;
-    }
-  }
-
-  // Vendas
-  async criarVenda(venda: any): Promise<any> {
-    try {
-      const response = await fetch(`${this.baseUrl}/vendas`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(venda),
-      });
-      if (!response.ok) throw new Error("Erro ao criar venda");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return null;
-    }
-  }
-
-  async getVendas(): Promise<any[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/vendas`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Erro ao buscar vendas");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return [];
-    }
-  }
-
-  // Clientes
-  async criarCliente(cliente: any): Promise<any> {
-    try {
-      const response = await fetch(`${this.baseUrl}/clientes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(cliente),
-      });
-      if (!response.ok) throw new Error("Erro ao criar cliente");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return null;
-    }
-  }
-
-  async getClientes(): Promise<any[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/clientes`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Erro ao buscar clientes");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return [];
-    }
-  }
-
-  // Relatórios
-  async getRelatorios(): Promise<any[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/relatorios`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Erro ao buscar relatórios");
-      return await response.json();
-    } catch (error) {
-      console.error("Erro:", error);
-      return [];
-    }
-  }
+export function converterProdutoApi(produto: ProdutoApi, index: number): Produto {
+  return {
+    id: produto.idProduto ?? produto.id ?? index + 1,
+    nome: produto.nome || "Produto sem nome",
+    categoria: produto.categoria || "Sem categoria",
+    marca: produto.marca || "Sem marca",
+    preco: Number(produto.preco || 0),
+    descricao: produto.descricao || "Produto cadastrado no sistema.",
+    imagem: produto.imagemUrl || imagensProdutos[index % imagensProdutos.length],
+  };
 }
 
-export const apiService = new ApiService();
+export function formatarRelatorio(data: RelatorioApi): string {
+  if (!data || Object.keys(data).length === 0) {
+    return "Nenhum dado encontrado no relatório.";
+  }
+
+  return Object.entries(data)
+    .map(([chave, valor]) => {
+      const nomeCampo = chave
+        .replace(/([A-Z])/g, " $1")
+        .replace(/^./, (letra) => letra.toUpperCase());
+
+      if (typeof valor === "number") {
+        const chaveLower = chave.toLowerCase();
+
+        if (
+          chaveLower.includes("valor") ||
+          chaveLower.includes("total") ||
+          chaveLower.includes("preco") ||
+          chaveLower.includes("preço") ||
+          chaveLower.includes("ticket")
+        ) {
+          return `${nomeCampo}: ${formatarPreco(valor)}`;
+        }
+
+        return `${nomeCampo}: ${valor}`;
+      }
+
+      return `${nomeCampo}: ${String(valor)}`;
+    })
+    .join("\n");
+}
