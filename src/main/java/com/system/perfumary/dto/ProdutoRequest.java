@@ -17,4 +17,5 @@ public class ProdutoRequest {
     private String descricao;
     private Long administradorId;
     private Long promocaoId;
+    private String imagemUrl;
 }

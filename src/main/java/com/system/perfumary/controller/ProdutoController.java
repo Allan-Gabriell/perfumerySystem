@@ -24,6 +24,7 @@ public class ProdutoController {
         produto.setMarca(request.getMarca());
         produto.setPreco(request.getPreco());
         produto.setDescricao(request.getDescricao());
+        produto.setImagemUrl(request.getImagemUrl());
         return service.cadastrar(produto, request.getAdministradorId(), request.getPromocaoId());
     }
 
@@ -45,6 +46,7 @@ public class ProdutoController {
         produto.setMarca(request.getMarca());
         produto.setPreco(request.getPreco());
         produto.setDescricao(request.getDescricao());
+        produto.setImagemUrl(request.getImagemUrl());
         return service.atualizar(id, produto, request.getAdministradorId(), request.getPromocaoId());
     }
 

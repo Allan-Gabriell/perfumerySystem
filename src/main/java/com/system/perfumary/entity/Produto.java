@@ -29,6 +29,7 @@ public class Produto {
     private String marca;
     private Double preco;
     private String descricao;
+    private String imagemUrl;
 
     @ManyToOne
     @JoinColumn(name = "administrador_id")
