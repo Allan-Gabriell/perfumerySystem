@@ -2,27 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { RelatorioApi } from "../services/api";
 import { API_URL, formatarRelatorio } from "../services/api";
-import { Bar, Pie } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
 
 export default function RelatorioVendas() {
   const navigate = useNavigate();
@@ -32,65 +11,6 @@ export default function RelatorioVendas() {
   const [tipoAtivo, setTipoAtivo] = useState<"vendas" | "produtos" | "">("");
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
-  
-  // Estados para armazenar as estruturas dos gráficos
-  const [faturamentoData, setFaturamentoData] = useState<any>(null);
-  const [produtosData, setProdutosData] = useState<any>(null);
-
-  async function gerarDadosDashboard() {
-    try {
-      setCarregando(true);
-      setErro("");
-      setTitulo("Gráficos Gerenciais");
-      setTipoAtivo(""); 
-
-      const response = await fetch(`${API_URL}/relatorios/dashboard`);
-
-      if (!response.ok) {
-        throw new Error("Erro ao carregar dados do painel.");
-      }
-
-      const data = await response.json();
-
-      // Mapeia chaves e valores do HashMap de faturamento do Java
-      const periodos = Object.keys(data.faturamentoPorPeriodo);
-      const valores = Object.values(data.faturamentoPorPeriodo);
-
-      setFaturamentoData({
-        labels: periodos,
-        datasets: [
-          {
-            label: "Faturamento por Período (R$)",
-            data: valores,
-            backgroundColor: "#d4af37",
-          },
-        ],
-      });
-
-      // Mapeia chaves e valores do HashMap de produtos mais vendidos do Java
-      const nomesProdutos = Object.keys(data.produtosMaisVendidos);
-      const qtdVendida = Object.values(data.produtosMaisVendidos);
-
-      setProdutosData({
-        labels: nomesProdutos,
-        datasets: [
-          {
-            label: "Quantidade Vendida",
-            data: qtdVendida,
-            backgroundColor: ["#9f7928", "#fff4bd", "#2a1e0a"],
-          },
-        ],
-      });
-
-      setRelatorio("dashboard_ativo");
-    } catch (error) {
-      console.error(error);
-      setErro("Não foi possível carregar os gráficos gerenciais.");
-      setRelatorio("");
-    } finally {
-      setCarregando(false);
-    }
-  }
 
   async function gerarRelatorioVendas() {
     try {
@@ -184,19 +104,7 @@ export default function RelatorioVendas() {
         <div style={styles.actions}>
           <button
             style={
-              titulo === "Gráficos Gerenciais"
-                ? styles.primaryButton
-                : styles.secondaryButton
-            }
-            onClick={gerarDadosDashboard}
-            disabled={carregando}
-          >
-            Gráficos Gerenciais
-          </button>
-
-          <button
-            style={
-              tipoAtivo === "vendas" && titulo !== "Gráficos Gerenciais"
+              tipoAtivo === "vendas"
                 ? styles.primaryButton
                 : styles.secondaryButton
             }
@@ -236,15 +144,6 @@ export default function RelatorioVendas() {
 
         {carregando ? (
           <div style={styles.emptyBox}>Carregando relatório...</div>
-        ) : titulo === "Gráficos Gerenciais" && relatorio ? (
-          <div style={{ display: "flex", gap: "40px", marginTop: "20px", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: "300px", background: "rgba(255,255,255,0.72)", padding: "20px", borderRadius: "22px", border: "1px solid rgba(176,141,47,0.16)" }}>
-              <Bar data={faturamentoData} />
-            </div>
-            <div style={{ width: "300px", margin: "0 auto", background: "rgba(255,255,255,0.72)", padding: "20px", borderRadius: "22px", border: "1px solid rgba(176,141,47,0.16)" }}>
-              <Pie data={produtosData} />
-            </div>
-          </div>
         ) : relatorio ? (
           <pre style={styles.pre}>{relatorio}</pre>
         ) : (

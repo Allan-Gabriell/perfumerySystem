@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+
 import com.system.perfumary.entity.Venda;
 import com.system.perfumary.entity.Produto;
 import com.system.perfumary.entity.Relatorio;
@@ -16,6 +17,7 @@ import com.system.perfumary.dto.RelatorioRequest;
 
 @Service
 public class RelatorioService {
+
     private final RelatorioRepository repository;
     private final VendaRepository vendaRepository;
     private final ProdutoRepository produtoRepository;
