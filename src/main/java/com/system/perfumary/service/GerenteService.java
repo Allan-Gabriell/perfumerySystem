@@ -2,6 +2,7 @@ package com.system.perfumary.service;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
@@ -89,5 +90,9 @@ public class GerenteService {
         promocaoService.excluirPromocao(promocaoId);
 
         return gerenteRepository.save(gerente);
+    }
+
+    public List<Gerente> listarTodos() {
+        return gerenteRepository.findAll();
     }
 }

@@ -1,5 +1,7 @@
 package com.system.perfumary.controller;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.*;
 
 import com.system.perfumary.dto.AlterarSenhaRequest;
@@ -17,6 +19,16 @@ public class GerenteController {
 
     public GerenteController(GerenteService gerenteService) {
         this.gerenteService = gerenteService;
+    }
+
+    @GetMapping
+    public List<Gerente> listar() {
+        return gerenteService.listarTodos();
+    }
+
+    @GetMapping("/{id}")
+    public Gerente buscar(@PathVariable Long id) {
+        return gerenteService.buscarPorId(id);
     }
 
     @PostMapping("/cadastrar-gerente")
