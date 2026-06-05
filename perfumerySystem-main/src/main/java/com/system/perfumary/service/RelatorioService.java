@@ -53,7 +53,6 @@ public class RelatorioService {
         result.put("totalVendido", totalVendido);
         result.put("quantidadeVendas", quantidadeVendas);
         result.put("ticketMedio", ticketMedio);
-
         return result;
     }
 

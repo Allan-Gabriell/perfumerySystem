@@ -93,31 +93,6 @@ export default function RelatorioVendas() {
     }
   }
 
-  async function gerarRelatorioVendas() {
-    try {
-      setCarregando(true);
-      setErro("");
-      setTitulo("Relatório de vendas");
-      setTipoAtivo("vendas");
-      setDashboard(null);
-
-      const response = await fetch(`${API_URL}/relatorios/vendas`);
-
-      if (!response.ok) {
-        throw new Error("Erro ao carregar relatório de vendas.");
-      }
-
-      const data: RelatorioGenerico = await response.json();
-      setRelatorio(formatarRelatorio(data));
-    } catch (error) {
-      console.error(error);
-      setErro("Não foi possível carregar o relatório de vendas.");
-      setRelatorio("");
-    } finally {
-      setCarregando(false);
-    }
-  }
-
   async function gerarRelatorioProdutos() {
     try {
       setCarregando(true);

@@ -32,6 +32,10 @@ export default function ProtectedRoute({
       return <Navigate to="/catalogo" replace />;
     }
 
+    if (usuarioLogado.nivel === "VENDEDOR") {
+      return <Navigate to="/vendedores" replace />;
+    }
+
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -3,23 +3,61 @@ import { useNavigate } from "react-router-dom";
 import type { ItemCarrinho, Produto, ProdutoApi } from "../services/api";
 import { API_URL, converterProdutoApi, formatarPreco } from "../services/api";
 
+type UsuarioLogado = {
+  id?: number;
+  nome: string;
+  email: string;
+  nivel: string;
+};
+
 export default function RegistroVenda() {
   const navigate = useNavigate();
+
+  const usuarioLogado: UsuarioLogado | null = JSON.parse(
+    localStorage.getItem("usuarioLogado") || "null"
+  );
 
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
   const [busca, setBusca] = useState("");
-  const [clienteId, setClienteId] = useState("1");
-  const [vendedorId, setVendedorId] = useState("1");
+  const [clienteId, setClienteId] = useState("");
   const [numeroVenda, setNumeroVenda] = useState(0);
   const [carregandoProdutos, setCarregandoProdutos] = useState(true);
   const [salvandoVenda, setSalvandoVenda] = useState(false);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const [clientes, setClientes] = useState<{ id: number; nome: string }[]>(
+    []
+  );
 
   useEffect(() => {
     buscarProdutos();
+    buscarClientes();
   }, []);
+
+  async function buscarClientes() {
+    try {
+      const res = await fetch(`${API_URL}/clientes`);
+
+      if (!res.ok) {
+        throw new Error("Erro ao buscar clientes");
+      }
+
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        setClientes([]);
+        return;
+      }
+
+      setClientes(
+        data.map((c: any) => ({ id: c.id, nome: c.nome || c.email || `#${c.id}` }))
+      );
+    } catch (error) {
+      console.error(error);
+      setClientes([]);
+    }
+  }
 
   async function buscarProdutos() {
     try {
@@ -117,8 +155,14 @@ export default function RegistroVenda() {
       return;
     }
 
-    if (!clienteId || !vendedorId) {
-      setErro("Informe o ID do cliente e o ID do vendedor.");
+    if (!clienteId) {
+      setErro("Informe o cliente para vincular a venda.");
+      setMensagem("");
+      return;
+    }
+
+    if (!usuarioLogado?.id) {
+      setErro("Não foi possível identificar o vendedor logado.");
       setMensagem("");
       return;
     }
@@ -130,7 +174,7 @@ export default function RegistroVenda() {
 
       const vendaRequest = {
         clienteId: Number(clienteId),
-        vendedorId: Number(vendedorId),
+        vendedorId: usuarioLogado.id,
         itens: carrinho.map((item) => ({
           produtoId: item.produto.id,
           quantidade: item.quantidade,
@@ -162,7 +206,7 @@ export default function RegistroVenda() {
     } catch (error) {
       console.error(error);
       setErro(
-        "Não foi possível registrar a venda. Verifique se clienteId, vendedorId e produtoId existem no banco."
+        "Não foi possível registrar a venda. Verifique se cliente e produtos existem no banco."
       );
     } finally {
       setSalvandoVenda(false);
@@ -178,8 +222,7 @@ export default function RegistroVenda() {
           <h1 style={styles.title}>Nova venda</h1>
 
           <p style={styles.subtitle}>
-            Monte a venda usando produtos cadastrados no back-end, informe cliente
-            e vendedor, e finalize o pedido pelo sistema.
+            Monte a venda usando produtos cadastrados no back-end, informe apenas o cliente conectado e finalize o pedido pelo sistema.
           </p>
         </div>
 
@@ -297,23 +340,37 @@ export default function RegistroVenda() {
           <div style={styles.idGrid}>
             <div>
               <label style={styles.label}>ID do cliente</label>
-              <input
-                style={styles.input}
-                type="number"
-                min="1"
-                value={clienteId}
-                onChange={(event) => setClienteId(event.target.value)}
-              />
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <select
+                  style={{ ...styles.input, padding: "10px" }}
+                  value={clienteId}
+                  onChange={(event) => setClienteId(event.target.value)}
+                >
+                  <option value="">Selecione um cliente</option>
+                  {clientes.map((c) => (
+                    <option key={c.id} value={String(c.id)}>
+                      {c.nome} (#{c.id})
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  style={styles.smallAction}
+                  onClick={() => navigate("/registro-cliente")}
+                >
+                  + Cliente
+                </button>
+              </div>
             </div>
 
             <div>
-              <label style={styles.label}>ID do vendedor</label>
+              <label style={styles.label}>Vendedor</label>
               <input
-                style={styles.input}
-                type="number"
-                min="1"
-                value={vendedorId}
-                onChange={(event) => setVendedorId(event.target.value)}
+                style={{ ...styles.input, background: "#f5f0e4" }}
+                type="text"
+                value={usuarioLogado?.nome || "Vendedor não identificado"}
+                readOnly
               />
             </div>
           </div>
@@ -753,6 +810,16 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 22,
     background: "rgba(255,255,255,0.72)",
     border: "1px solid rgba(176,141,47,0.16)",
+  },
+
+  smallAction: {
+    border: "1px solid rgba(166,124,0,0.18)",
+    borderRadius: 10,
+    padding: "8px 10px",
+    background: "rgba(255,255,255,0.9)",
+    color: "#5f4513",
+    fontWeight: 900,
+    cursor: "pointer",
   },
 
   summaryLine: {

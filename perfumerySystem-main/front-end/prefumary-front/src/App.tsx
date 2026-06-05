@@ -12,6 +12,7 @@ import RelatorioVendas from "./pages/RelatorioVendas";
 import CatalogoCliente from "./pages/CatalogoCliente";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AreaAdministracao from "./pages/AreaAdministracao";
+import Vendedores from "./pages/Vendedores";
 
 export default function App() {
   return (
@@ -20,13 +21,23 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         <Route path="/login" element={<Login />} />
+        <Route path="/registro-cliente" element={<CadastroCliente />} />
         <Route path="/catalogo" element={<CatalogoCliente />} />
 
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute allowed={["ADMIN", "GERENTE", "VENDEDOR"]}>
+            <ProtectedRoute allowed={["ADMIN", "GERENTE"]}>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/vendedores"
+          element={
+            <ProtectedRoute allowed={["VENDEDOR"]}>
+              <Vendedores />
             </ProtectedRoute>
           }
         />

@@ -15,7 +15,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/relatorios")
 @CrossOrigin(origins = "http://localhost:5173")
 public class RelatorioController {
-
     private final RelatorioService service;
 
     public RelatorioController(RelatorioService service) {

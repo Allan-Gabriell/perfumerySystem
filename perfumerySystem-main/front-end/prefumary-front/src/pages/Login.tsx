@@ -29,7 +29,6 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [tipoEntrada, setTipoEntrada] = useState<TipoEntrada>("dashboard");
-  const [nivelSelecionado, setNivelSelecionado] = useState<NivelAcesso>("ADMIN");
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -72,6 +71,20 @@ export default function Login() {
     }
   }
 
+  async function buscarTodosUsuarios() {
+    try {
+      const [admins, gerentes, vendedores] = await Promise.all([
+        buscarUsuariosPorNivel("ADMIN"),
+        buscarUsuariosPorNivel("GERENTE"),
+        buscarUsuariosPorNivel("VENDEDOR"),
+      ]);
+
+      return [...admins, ...gerentes, ...vendedores];
+    } catch {
+      return [];
+    }
+  }
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
 
@@ -80,16 +93,13 @@ export default function Login() {
       return;
     }
 
-    if (tipoEntrada === "administracao" && nivelSelecionado === "VENDEDOR") {
-      setErro("Vendedores não possuem acesso à área administrativa.");
-      return;
-    }
+    // validações básicas de formulário
 
     try {
       setCarregando(true);
       setErro("");
 
-      const usuarios = await buscarUsuariosPorNivel(nivelSelecionado);
+      const usuarios = await buscarTodosUsuarios();
 
       const usuarioEncontrado: UsuarioComNivel | undefined = usuarios.find(
         (item) => {
@@ -121,12 +131,14 @@ export default function Login() {
 
 
 
-      if (tipoEntrada === "administracao") {
-        navigate("/administracao");
+      // redirecionamento por nível: vendedores -> painel, gerentes/administradores -> área administrativa
+      if (dadosUsuario.nivel === "VENDEDOR") {
+        navigate("/vendedores");
         return;
       }
 
-      navigate("/dashboard");
+      // ADMIN e GERENTE devem acessar a área administrativa
+      navigate("/administracao");
     } catch (error) {
       console.error(error);
       setErro("Não foi possível conectar ao back-end.");
@@ -170,7 +182,7 @@ export default function Login() {
               <h2 style={styles.title}>Entrar</h2>
 
               <p style={styles.subtitle}>
-                Escolha o tipo de entrada e o nível de acesso do funcionário.
+                Faça login com seu e-mail e senha.
               </p>
             </div>
 
@@ -187,7 +199,7 @@ export default function Login() {
                   setErro("");
                 }}
               >
-                Painel
+                Vendedores
               </button>
 
               <button
@@ -207,20 +219,6 @@ export default function Login() {
             </div>
 
             <form onSubmit={handleLogin}>
-              <label style={styles.label}>Nível de acesso</label>
-
-              <select
-                style={styles.select}
-                value={nivelSelecionado}
-                onChange={(e) => {
-                  setNivelSelecionado(e.target.value as NivelAcesso);
-                  setErro("");
-                }}
-              >
-                <option value="ADMIN">Administrador</option>
-                <option value="GERENTE">Gerente</option>
-                <option value="VENDEDOR">Vendedor</option>
-              </select>
 
               <label style={styles.label}>Usuário</label>
 
@@ -268,12 +266,29 @@ export default function Login() {
                   ? "Entrar na administração"
                   : "Entrar no painel"}
               </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/registro-cliente")}
+                style={{
+                  marginTop: 12,
+                  width: "100%",
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(166,124,0,0.23)",
+                  background: "transparent",
+                  color: "#5f4513",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                Clique aqui para cadastrar-se
+              </button>
             </form>
 
             <div style={styles.footer}>
               <span>
-                O acesso é definido pelo nível selecionado e validado pelos
-                usuários cadastrados no back-end.
+                O acesso é validado pelos usuários cadastrados no back-end.
               </span>
             </div>
           </div>
