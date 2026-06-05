@@ -44,7 +44,7 @@ export default function Login() {
       }
 
       if (nivel === "GERENTE") {
-        endpoint = "/api/gerentes";
+        endpoint = "/gerentes";
       }
 
       if (nivel === "VENDEDOR") {
@@ -111,13 +111,15 @@ export default function Login() {
       }
 
       const dadosUsuario: UsuarioLogado = {
-        id: usuarioEncontrado.id,
-        nome: usuarioEncontrado.nome || "Funcionário",
-        email: usuarioEncontrado.email || "",
-        nivel: usuarioEncontrado.nivel,
+      id: usuarioEncontrado.id,
+      nome: usuarioEncontrado.nome || "Funcionário",
+      email: usuarioEncontrado.email || "",
+      nivel: usuarioEncontrado.nivel,
       };
 
       localStorage.setItem("usuarioLogado", JSON.stringify(dadosUsuario));
+
+
 
       if (tipoEntrada === "administracao") {
         navigate("/administracao");
@@ -147,12 +149,9 @@ export default function Login() {
           </div>
 
           <div style={styles.heroBlock}>
-            <span style={styles.tag}>Acesso ao sistema</span>
+          
 
-            <h2 style={styles.heroTitle}>
-              Controle interno com níveis de permissão.
-            </h2>
-
+            
            
           </div>
 

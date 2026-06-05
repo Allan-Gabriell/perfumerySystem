@@ -2,15 +2,20 @@ package com.system.perfumary.controller;
 
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.web.bind.annotation.*;
+
 import com.system.perfumary.entity.Relatorio;
 import com.system.perfumary.dto.RelatorioRequest;
 import com.system.perfumary.service.RelatorioService;
+
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/relatorios")
+@CrossOrigin(origins = "http://localhost:5173")
 public class RelatorioController {
+
     private final RelatorioService service;
 
     public RelatorioController(RelatorioService service) {
@@ -35,5 +40,10 @@ public class RelatorioController {
     @GetMapping("/produtos")
     public Map<String, Object> gerarRelatorioProdutos() {
         return service.gerarRelatorioProdutos();
+    }
+
+    @GetMapping("/dashboard")
+    public Map<String, Object> gerarDashboard() {
+        return service.gerarDashboard();
     }
 }

@@ -9,10 +9,12 @@ import com.system.perfumary.dto.GerenteRequest;
 import com.system.perfumary.dto.PromocaoRequest;
 import com.system.perfumary.entity.Gerente;
 import com.system.perfumary.service.GerenteService;
+
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/gerentes")
+@CrossOrigin(origins = "http://localhost:5173")
 public class GerenteController {
 
     private final GerenteService gerenteService;
@@ -33,7 +35,6 @@ public class GerenteController {
 
     @PostMapping("/cadastrar-gerente")
     public String cadastrarGerente(@Valid @RequestBody GerenteRequest request) {
-
         gerenteService.cadastrarGerente(
                 request.getNome(),
                 request.getEmail(),
@@ -45,8 +46,8 @@ public class GerenteController {
 
     @PostMapping("/{id}/promocoes")
     public Gerente cadastrarPromocao(
-        @PathVariable Long id,
-        @Valid @RequestBody PromocaoRequest request) {
+            @PathVariable Long id,
+            @Valid @RequestBody PromocaoRequest request) {
 
         return gerenteService.cadastrarPromocao(
                 id,
@@ -59,8 +60,8 @@ public class GerenteController {
 
     @PutMapping("/{id}/alterar-senha")
     public String alterarSenhaGerente(
-        @PathVariable Long id,
-        @RequestBody AlterarSenhaRequest request) {
+            @PathVariable Long id,
+            @RequestBody AlterarSenhaRequest request) {
 
         gerenteService.alterarSenhaGerente(id, request.getNovaSenha());
 
@@ -73,7 +74,14 @@ public class GerenteController {
             @PathVariable Long promocaoId,
             @Valid @RequestBody PromocaoRequest request) {
 
-        gerenteService.atualizarPromocao(promocaoId, request.getNome(), request.getDesconto(), request.getDataInicio(), request.getDataFim());
+        gerenteService.atualizarPromocao(
+                promocaoId,
+                request.getNome(),
+                request.getDesconto(),
+                request.getDataInicio(),
+                request.getDataFim()
+        );
+
         return gerenteService.buscarPorId(gerenteId);
     }
 
@@ -83,15 +91,13 @@ public class GerenteController {
         return "Gerente excluído com sucesso!";
     }
 
-
     @DeleteMapping("/{gerenteId}/promocoes/{promocaoId}")
     public String deletarPromocao(
             @PathVariable Long gerenteId,
             @PathVariable Long promocaoId) {
 
-        gerenteService.deletarPromocao(
-                gerenteId,
-                promocaoId);
+        gerenteService.deletarPromocao(gerenteId, promocaoId);
+
         return "Promoção deletada com sucesso!";
     }
 }

@@ -1,92 +1,210 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const API_URL = "http://localhost:8080";
 
+type NivelAcesso = "ADMIN" | "GERENTE" | "VENDEDOR";
+
+type UsuarioLogado = {
+  id?: number;
+  nome: string;
+  email: string;
+  nivel: NivelAcesso;
+};
+
+type ProdutoApi = {
+  id?: number;
+  nome: string;
+  categoria: string;
+  marca: string;
+  preco: number;
+  descricao: string;
+  imagemUrl?: string | null;
+  administrador?: {
+    id?: number;
+  } | null;
+  promocao?: {
+    id?: number;
+    nome?: string;
+    desconto?: number;
+    dataInicio?: string;
+    dataFim?: string;
+  } | null;
+};
+
+type PromocaoApi = {
+  id?: number;
+  nome?: string;
+  desconto?: number;
+  dataInicio?: string;
+  dataFim?: string;
+};
+
+type GerenteApi = {
+  id?: number;
+  nome?: string;
+  email?: string;
+  promocoes?: PromocaoApi[];
+};
+
 type PromocaoForm = {
-  gerenteId: string;
+  produtoId: string;
   nome: string;
   desconto: string;
   dataInicio: string;
   dataFim: string;
 };
 
-type Gerente = {
-  id: number;
-  nome: string;
-  email: string;
-};
-
 export default function CadastroPromocao() {
   const navigate = useNavigate();
 
+  const usuarioLogado: UsuarioLogado | null = JSON.parse(
+    localStorage.getItem("usuarioLogado") || "null"
+  );
+
   const [form, setForm] = useState<PromocaoForm>({
-    gerenteId: "1",
+    produtoId: "",
     nome: "",
     desconto: "",
     dataInicio: "",
     dataFim: "",
   });
 
+  const [produtos, setProdutos] = useState<ProdutoApi[]>([]);
   const [carregando, setCarregando] = useState(false);
+  const [carregandoProdutos, setCarregandoProdutos] = useState(false);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const [gerenteVerificado, setGerenteVerificado] = useState<Gerente | null>(null);
-  const [erroGerente, setErroGerente] = useState("");
-  const [verificandoGerente, setVerificandoGerente] = useState(false);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
+  useEffect(() => {
+    buscarProdutos();
+  }, []);
 
-  async function verificarGerente(gerenteId: string) {
-    if (!gerenteId) {
-      setGerenteVerificado(null);
-      setErroGerente("");
-      return;
-    }
-
+  async function buscarProdutos() {
     try {
-      setVerificandoGerente(true);
-      setErroGerente("");
+      setCarregandoProdutos(true);
+      setErro("");
 
-      const response = await fetch(`${API_URL}/api/gerentes/${gerenteId}`);
+      const response = await fetch(`${API_URL}/produtos`);
 
       if (!response.ok) {
-        setGerenteVerificado(null);
-        setErroGerente(`Gerente com ID ${gerenteId} não encontrado.`);
-        return;
+        throw new Error("Erro ao buscar produtos.");
       }
 
-      const gerente: Gerente = await response.json();
-      setGerenteVerificado(gerente);
-      setErroGerente("");
+      const data: ProdutoApi[] = await response.json();
+
+      if (!Array.isArray(data)) {
+        throw new Error("Resposta inválida da API.");
+      }
+
+      setProdutos(data);
     } catch (error) {
-      setGerenteVerificado(null);
-      setErroGerente("Erro ao verificar gerente. Tente novamente.");
       console.error(error);
+      setErro("Não foi possível carregar os produtos cadastrados.");
+      setProdutos([]);
     } finally {
-      setVerificandoGerente(false);
+      setCarregandoProdutos(false);
     }
+  }
+
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   function limparFormulario() {
     setForm({
-      gerenteId: "1",
+      produtoId: "",
       nome: "",
       desconto: "",
       dataInicio: "",
       dataFim: "",
     });
-    setGerenteVerificado(null);
-    setErroGerente("");
+  }
+
+  function buscarProdutoSelecionado() {
+    return produtos.find((produto) => String(produto.id) === form.produtoId);
+  }
+
+  function encontrarPromocaoCriada(
+    gerente: GerenteApi,
+    nome: string,
+    desconto: number
+  ) {
+    const promocoes = gerente.promocoes || [];
+
+    if (promocoes.length === 0) {
+      return null;
+    }
+
+    const promocaoEncontrada = [...promocoes]
+      .reverse()
+      .find(
+        (promocao) =>
+          promocao.nome === nome && Number(promocao.desconto) === desconto
+      );
+
+    return promocaoEncontrada || promocoes[promocoes.length - 1];
+  }
+
+  async function atrelarProdutoAPromocao(
+    produto: ProdutoApi,
+    promocaoId: number
+  ) {
+    const produtoRequest = {
+      nome: produto.nome,
+      categoria: produto.categoria,
+      marca: produto.marca,
+      preco: Number(produto.preco),
+      descricao: produto.descricao,
+      imagemUrl: produto.imagemUrl || null,
+      administradorId: produto.administrador?.id || null,
+      promocaoId: promocaoId,
+    };
+
+    const response = await fetch(`${API_URL}/produtos/${produto.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(produtoRequest),
+    });
+
+    if (!response.ok) {
+      const respostaErro = await response.text();
+      throw new Error(
+        respostaErro || "Erro ao atrelar produto à promoção criada."
+      );
+    }
+
+    return response.json();
   }
 
   async function handleSalvar(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!usuarioLogado) {
+      setErro("Você precisa estar logado para cadastrar uma promoção.");
+      setMensagem("");
+      navigate("/login");
+      return;
+    }
+
+    if (usuarioLogado.nivel !== "GERENTE") {
+      setErro("A promoção deve ser cadastrada por um gerente logado.");
+      setMensagem("");
+      return;
+    }
+
+    if (!usuarioLogado.id) {
+      setErro("Não foi possível identificar o ID do gerente logado.");
+      setMensagem("");
+      return;
+    }
+
     if (
-      !form.gerenteId ||
+      !form.produtoId ||
       !form.nome ||
       !form.desconto ||
       !form.dataInicio ||
@@ -97,8 +215,10 @@ export default function CadastroPromocao() {
       return;
     }
 
-    if (!gerenteVerificado || String(gerenteVerificado.id) !== String(Number(form.gerenteId))) {
-      setErro("Verifique o gerente antes de salvar a promoção.");
+    const produtoSelecionado = buscarProdutoSelecionado();
+
+    if (!produtoSelecionado || !produtoSelecionado.id) {
+      setErro("Produto selecionado inválido.");
       setMensagem("");
       return;
     }
@@ -127,8 +247,8 @@ export default function CadastroPromocao() {
         dataFim: form.dataFim,
       };
 
-      const response = await fetch(
-        `${API_URL}/api/gerentes/${form.gerenteId}/promocoes`,
+      const responsePromocao = await fetch(
+        `${API_URL}/gerentes/${usuarioLogado.id}/promocoes`,
         {
           method: "POST",
           headers: {
@@ -138,22 +258,44 @@ export default function CadastroPromocao() {
         }
       );
 
-      if (!response.ok) {
-        const respostaErro = await response.text();
+      if (!responsePromocao.ok) {
+        const respostaErro = await responsePromocao.text();
         throw new Error(respostaErro || "Erro ao cadastrar promoção.");
       }
 
-      setMensagem(`Promoção "${form.nome}" cadastrada com sucesso!`);
+      const gerenteAtualizado: GerenteApi = await responsePromocao.json();
+
+      const promocaoCriada = encontrarPromocaoCriada(
+        gerenteAtualizado,
+        form.nome,
+        descontoConvertido
+      );
+
+      if (!promocaoCriada?.id) {
+        throw new Error(
+          "A promoção foi criada, mas não foi possível identificar o ID dela no retorno do back-end."
+        );
+      }
+
+      await atrelarProdutoAPromocao(produtoSelecionado, promocaoCriada.id);
+
+      setMensagem(
+        `Promoção "${form.nome}" cadastrada e vinculada ao produto "${produtoSelecionado.nome}".`
+      );
+
       limparFormulario();
+      buscarProdutos();
     } catch (error) {
       console.error(error);
       setErro(
-        "Não foi possível cadastrar a promoção. Verifique se o gerenteId existe no banco."
+        "Não foi possível cadastrar a promoção e atrelar ao produto. Verifique se o produto possui administrador vinculado e se o back-end retorna a lista de promoções do gerente."
       );
     } finally {
       setCarregando(false);
     }
   }
+
+  const produtoSelecionado = buscarProdutoSelecionado();
 
   return (
     <main style={styles.page}>
@@ -172,16 +314,19 @@ export default function CadastroPromocao() {
             <span style={styles.tag}>Cadastro de promoção</span>
 
             <h2 style={styles.heroTitle}>
-              Crie campanhas de desconto com aparência premium.
+              Crie descontos e vincule diretamente a um produto.
             </h2>
 
             <p style={styles.heroText}>
-              As promoções são vinculadas a um gerente e podem ser utilizadas
-              depois no cadastro ou atualização dos produtos.
+              A promoção será associada ao gerente logado e aplicada ao produto
+              escolhido, sem necessidade de digitar ID manualmente.
             </p>
           </div>
 
-        
+          <div style={styles.infoBox}>
+            <span>Gerente responsável</span>
+            <strong>{usuarioLogado?.nome || "Não identificado"}</strong>
+          </div>
         </div>
 
         <form onSubmit={handleSalvar} style={styles.formPanel}>
@@ -189,8 +334,7 @@ export default function CadastroPromocao() {
             <div>
               <h2 style={styles.formTitle}>Nova promoção</h2>
               <p style={styles.formSubtitle}>
-                Informe o período, o percentual de desconto e o gerente
-                responsável.
+                Escolha o produto, informe o desconto e o período da campanha.
               </p>
             </div>
 
@@ -206,6 +350,27 @@ export default function CadastroPromocao() {
           {erro && <div style={styles.errorBox}>{erro}</div>}
           {mensagem && <div style={styles.successBox}>{mensagem}</div>}
 
+          <label style={styles.label}>Produto da promoção</label>
+          <select
+            style={styles.input}
+            name="produtoId"
+            value={form.produtoId}
+            onChange={handleChange}
+            disabled={carregandoProdutos}
+          >
+            <option value="">
+              {carregandoProdutos
+                ? "Carregando produtos..."
+                : "Selecione um produto"}
+            </option>
+
+            {produtos.map((produto) => (
+              <option key={produto.id} value={produto.id}>
+                {produto.nome} — {produto.marca} — R$ {Number(produto.preco).toFixed(2)}
+              </option>
+            ))}
+          </select>
+
           <label style={styles.label}>Nome da promoção</label>
           <input
             style={styles.input}
@@ -217,25 +382,6 @@ export default function CadastroPromocao() {
 
           <div style={styles.row}>
             <div style={styles.col}>
-              <label style={styles.label}>ID do gerente</label>
-              <input
-                style={styles.input}
-                name="gerenteId"
-                type="number"
-                min="1"
-                placeholder="Ex: 1"
-                value={form.gerenteId}
-                onChange={handleChange}
-                onBlur={() => verificarGerente(form.gerenteId)}
-              />
-              {verificandoGerente && <p style={styles.helperText}>Verificando gerente...</p>}
-              {erroGerente && <p style={styles.errorText}>{erroGerente}</p>}
-              {gerenteVerificado && !erroGerente && (
-                <p style={styles.successText}>Gerente encontrado: {gerenteVerificado.nome}</p>
-              )}
-            </div>
-
-            <div style={styles.col}>
               <label style={styles.label}>Desconto (%)</label>
               <input
                 style={styles.input}
@@ -246,6 +392,15 @@ export default function CadastroPromocao() {
                 placeholder="Ex: 15"
                 value={form.desconto}
                 onChange={handleChange}
+              />
+            </div>
+
+            <div style={styles.col}>
+              <label style={styles.label}>Gerente responsável</label>
+              <input
+                style={styles.input}
+                value={usuarioLogado?.nome || "Gerente não identificado"}
+                disabled
               />
             </div>
           </div>
@@ -284,7 +439,11 @@ export default function CadastroPromocao() {
                 </strong>
 
                 <p style={styles.previewText}>
-                  Gerente #{form.gerenteId || "0"}
+                  Produto: {produtoSelecionado?.nome || "Nenhum produto selecionado"}
+                </p>
+
+                <p style={styles.previewText}>
+                  Gerente responsável: {usuarioLogado?.nome || "Não identificado"}
                 </p>
 
                 <p style={styles.previewText}>
@@ -310,7 +469,7 @@ export default function CadastroPromocao() {
             </button>
 
             <button style={styles.btn} type="submit" disabled={carregando}>
-              {carregando ? "Salvando..." : "Salvar promoção"}
+              {carregando ? "Salvando..." : "Salvar e vincular promoção"}
             </button>
           </div>
         </form>
@@ -613,23 +772,5 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     marginBottom: 16,
     lineHeight: 1.5,
-  },
-
-  helperText: {
-    margin: "4px 0 0",
-    fontSize: 12,
-    color: "#7b6a42",
-  },
-
-  successText: {
-    margin: "4px 0 0",
-    fontSize: 12,
-    color: "#166534",
-  },
-
-  errorText: {
-    margin: "4px 0 0",
-    fontSize: 12,
-    color: "#991b1b",
   },
 };
