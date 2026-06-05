@@ -11,6 +11,12 @@ type PromocaoForm = {
   dataFim: string;
 };
 
+type Gerente = {
+  id: number;
+  nome: string;
+  email: string;
+};
+
 export default function CadastroPromocao() {
   const navigate = useNavigate();
 
@@ -25,9 +31,43 @@ export default function CadastroPromocao() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const [gerenteVerificado, setGerenteVerificado] = useState<Gerente | null>(null);
+  const [erroGerente, setErroGerente] = useState("");
+  const [verificandoGerente, setVerificandoGerente] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
+  }
+
+  async function verificarGerente(gerenteId: string) {
+    if (!gerenteId) {
+      setGerenteVerificado(null);
+      setErroGerente("");
+      return;
+    }
+
+    try {
+      setVerificandoGerente(true);
+      setErroGerente("");
+
+      const response = await fetch(`${API_URL}/api/gerentes/${gerenteId}`);
+
+      if (!response.ok) {
+        setGerenteVerificado(null);
+        setErroGerente(`Gerente com ID ${gerenteId} não encontrado.`);
+        return;
+      }
+
+      const gerente: Gerente = await response.json();
+      setGerenteVerificado(gerente);
+      setErroGerente("");
+    } catch (error) {
+      setGerenteVerificado(null);
+      setErroGerente("Erro ao verificar gerente. Tente novamente.");
+      console.error(error);
+    } finally {
+      setVerificandoGerente(false);
+    }
   }
 
   function limparFormulario() {
@@ -38,6 +78,8 @@ export default function CadastroPromocao() {
       dataInicio: "",
       dataFim: "",
     });
+    setGerenteVerificado(null);
+    setErroGerente("");
   }
 
   async function handleSalvar(e: React.FormEvent) {
@@ -51,6 +93,12 @@ export default function CadastroPromocao() {
       !form.dataFim
     ) {
       setErro("Preencha todos os campos obrigatórios.");
+      setMensagem("");
+      return;
+    }
+
+    if (!gerenteVerificado || String(gerenteVerificado.id) !== String(Number(form.gerenteId))) {
+      setErro("Verifique o gerente antes de salvar a promoção.");
       setMensagem("");
       return;
     }
@@ -80,7 +128,7 @@ export default function CadastroPromocao() {
       };
 
       const response = await fetch(
-        `${API_URL}/gerentes/${form.gerenteId}/promocoes`,
+        `${API_URL}/api/gerentes/${form.gerenteId}/promocoes`,
         {
           method: "POST",
           headers: {
@@ -178,7 +226,13 @@ export default function CadastroPromocao() {
                 placeholder="Ex: 1"
                 value={form.gerenteId}
                 onChange={handleChange}
+                onBlur={() => verificarGerente(form.gerenteId)}
               />
+              {verificandoGerente && <p style={styles.helperText}>Verificando gerente...</p>}
+              {erroGerente && <p style={styles.errorText}>{erroGerente}</p>}
+              {gerenteVerificado && !erroGerente && (
+                <p style={styles.successText}>Gerente encontrado: {gerenteVerificado.nome}</p>
+              )}
             </div>
 
             <div style={styles.col}>
@@ -559,5 +613,23 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     marginBottom: 16,
     lineHeight: 1.5,
+  },
+
+  helperText: {
+    margin: "4px 0 0",
+    fontSize: 12,
+    color: "#7b6a42",
+  },
+
+  successText: {
+    margin: "4px 0 0",
+    fontSize: 12,
+    color: "#166534",
+  },
+
+  errorText: {
+    margin: "4px 0 0",
+    fontSize: 12,
+    color: "#991b1b",
   },
 };

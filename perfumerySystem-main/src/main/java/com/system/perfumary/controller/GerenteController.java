@@ -10,7 +10,7 @@ import com.system.perfumary.service.GerenteService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/gerentes")
+@RequestMapping({"/gerentes", "/api/gerentes"})
 public class GerenteController {
 
     private final GerenteService gerenteService;

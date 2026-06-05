@@ -44,7 +44,7 @@ export default function Login() {
       }
 
       if (nivel === "GERENTE") {
-        endpoint = "/gerentes";
+        endpoint = "/api/gerentes";
       }
 
       if (nivel === "VENDEDOR") {
