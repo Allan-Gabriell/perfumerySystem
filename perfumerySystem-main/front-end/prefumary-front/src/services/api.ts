@@ -9,6 +9,13 @@ export type ProdutoApi = {
   preco: number;
   descricao: string;
   imagemUrl?: string | null;
+  promocao?: {
+    id?: number;
+    nome?: string;
+    desconto?: number;
+    dataInicio?: string;
+    dataFim?: string;
+  } | null;
 };
 
 export type Produto = {
@@ -19,6 +26,13 @@ export type Produto = {
   preco: number;
   descricao: string;
   imagem: string;
+  promocao?: {
+    id?: number;
+    nome?: string;
+    desconto?: number;
+    dataInicio?: string;
+    dataFim?: string;
+  } | null;
 };
 
 export type ItemCarrinho = {
@@ -53,6 +67,7 @@ export function converterProdutoApi(produto: ProdutoApi, index: number): Produto
     preco: Number(produto.preco || 0),
     descricao: produto.descricao || "Produto cadastrado no sistema.",
     imagem: produto.imagemUrl || imagensProdutos[index % imagensProdutos.length],
+    promocao: produto.promocao || null,
   };
 }
 

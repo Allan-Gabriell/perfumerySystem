@@ -3,21 +3,21 @@ import { useNavigate } from "react-router-dom";
 
 const API_URL = "http://localhost:8080";
 
-type ClienteForm = {
+type VendedorForm = {
   nome: string;
-  cpf: string;
-  telefone: string;
   email: string;
+  senha: string;
+  confirmarSenha: string;
 };
 
-export default function CadastroCliente() {
+export default function CadastroVendedor() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState<ClienteForm>({
+  const [form, setForm] = useState<VendedorForm>({
     nome: "",
-    cpf: "",
-    telefone: "",
     email: "",
+    senha: "",
+    confirmarSenha: "",
   });
 
   const [carregando, setCarregando] = useState(false);
@@ -28,27 +28,10 @@ export default function CadastroCliente() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function limparFormulario() {
-    setForm({
-      nome: "",
-      cpf: "",
-      telefone: "",
-      email: "",
-    });
-  }
-
-  function limparCPF(cpf: string) {
-    return cpf.replace(/\D/g, "");
-  }
-
-  function limparTelefone(telefone: string) {
-    return telefone.replace(/\D/g, "");
-  }
-
   async function handleSalvar(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!form.nome || !form.cpf || !form.telefone || !form.email) {
+    if (!form.nome || !form.email || !form.senha || !form.confirmarSenha) {
       setErro("Preencha todos os campos obrigatórios.");
       setMensagem("");
       return;
@@ -56,13 +39,13 @@ export default function CadastroCliente() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
-      setErro("Informe um e-mail com formato válido (ex: cliente@email.com).");
+      setErro("Informe um e-mail com formato válido (ex: usuario@email.com).");
       setMensagem("");
       return;
     }
 
-    if (limparCPF(form.cpf).length !== 11) {
-      setErro("Informe um CPF válido com 11 números.");
+    if (form.senha !== form.confirmarSenha) {
+      setErro("As senhas não coincidem.");
       setMensagem("");
       return;
     }
@@ -72,32 +55,47 @@ export default function CadastroCliente() {
       setErro("");
       setMensagem("");
 
-      const clienteRequest = {
+      const vendedorRequest = {
         nome: form.nome,
-        cpf: limparCPF(form.cpf),
-        telefone: limparTelefone(form.telefone),
         email: form.email,
+        senha: form.senha,
       };
 
-      const response = await fetch(`${API_URL}/clientes`, {
+      const response = await fetch(`${API_URL}/vendedores`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(clienteRequest),
+        body: JSON.stringify(vendedorRequest),
       });
 
       if (!response.ok) {
         const respostaErro = await response.text();
-        throw new Error(respostaErro || "Erro ao cadastrar cliente.");
+        throw new Error(respostaErro || "Erro ao cadastrar vendedor.");
       }
 
-      setMensagem(`Cliente "${form.nome}" cadastrado com sucesso!`);
-      limparFormulario();
+      const data = await response.json();
+
+      // Logar automaticamente após cadastro
+      const dadosUsuario = {
+        id: data.id,
+        nome: data.nome,
+        email: data.email,
+        nivel: "VENDEDOR",
+      };
+
+      localStorage.setItem("usuarioLogado", JSON.stringify(dadosUsuario));
+
+      setMensagem(`Vendedor "${form.nome}" cadastrado com sucesso! Entrando no painel...`);
+      
+      setTimeout(() => {
+        navigate("/vendedores");
+      }, 2000);
+
     } catch (error) {
       console.error(error);
       setErro(
-        "Não foi possível cadastrar o cliente. Verifique se o back-end está rodando e se a rota POST /clientes existe."
+        "Não foi possível cadastrar o vendedor. Verifique se o back-end está rodando."
       );
     } finally {
       setCarregando(false);
@@ -109,42 +107,38 @@ export default function CadastroCliente() {
       <section style={styles.container}>
         <div style={styles.leftPanel}>
           <div style={styles.brandArea}>
-            <div style={styles.logo}>C</div>
+            <div style={styles.logo}>V</div>
 
             <div>
               <h1 style={styles.brandTitle}>Aura Gold</h1>
-              <p style={styles.brandSubtitle}>clientes & atendimento</p>
+              <p style={styles.brandSubtitle}>time de vendas</p>
             </div>
           </div>
 
           <div>
-            <span style={styles.tag}>Cadastro de cliente</span>
+            <span style={styles.tag}>Cadastro de vendedor</span>
 
             <h2 style={styles.heroTitle}>
-              Registre clientes para vincular vendas e acompanhar o histórico.
+              Junte-se à nossa equipe e comece a transformar beleza em resultados.
             </h2>
-
-            
           </div>
-
-         
         </div>
 
         <form onSubmit={handleSalvar} style={styles.formPanel}>
           <div style={styles.topbar}>
             <div>
-              <h2 style={styles.formTitle}>Novo cliente</h2>
+              <h2 style={styles.formTitle}>Novo vendedor</h2>
               <p style={styles.formSubtitle}>
-                Preencha as informações principais para registrar o cliente.
+                Crie sua conta para acessar o painel de vendas.
               </p>
             </div>
 
             <button
               type="button"
               style={styles.navBtn}
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/login")}
             >
-              ← Voltar
+              ← Voltar ao login
             </button>
           </div>
 
@@ -155,82 +149,56 @@ export default function CadastroCliente() {
           <input
             style={styles.input}
             name="nome"
-            placeholder="Ex: Maria Silva"
+            placeholder="Ex: João Souza"
             value={form.nome}
             onChange={handleChange}
           />
-
-          <div style={styles.row}>
-            <div style={styles.col}>
-              <label style={styles.label}>CPF</label>
-              <input
-                style={styles.input}
-                name="cpf"
-                placeholder="000.000.000-00"
-                value={form.cpf}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div style={styles.col}>
-              <label style={styles.label}>Telefone</label>
-              <input
-                style={styles.input}
-                name="telefone"
-                placeholder="(00) 00000-0000"
-                value={form.telefone}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
 
           <label style={styles.label}>E-mail</label>
           <input
             style={styles.input}
             name="email"
             type="email"
-            placeholder="cliente@email.com"
+            placeholder="vendedor@email.com"
             value={form.email}
             onChange={handleChange}
           />
 
-          <div style={styles.previewCard}>
-            <span style={styles.previewLabel}>Prévia do cliente</span>
+          <div style={styles.row}>
+            <div style={styles.col}>
+              <label style={styles.label}>Senha</label>
+              <input
+                style={styles.input}
+                name="senha"
+                type="password"
+                placeholder="********"
+                value={form.senha}
+                onChange={handleChange}
+              />
+            </div>
 
-            <div style={styles.previewContent}>
-              <div style={styles.avatar}>
-                {form.nome ? form.nome.charAt(0).toUpperCase() : "C"}
-              </div>
-
-              <div>
-                <strong style={styles.previewTitle}>
-                  {form.nome || "Nome do cliente"}
-                </strong>
-
-                <p style={styles.previewText}>
-                  {form.email || "cliente@email.com"}
-                </p>
-
-                <p style={styles.previewText}>
-                  {form.telefone || "(00) 00000-0000"}
-                </p>
-              </div>
+            <div style={styles.col}>
+              <label style={styles.label}>Confirmar senha</label>
+              <input
+                style={styles.input}
+                name="confirmarSenha"
+                type="password"
+                placeholder="********"
+                value={form.confirmarSenha}
+                onChange={handleChange}
+              />
             </div>
           </div>
 
           <div style={styles.actions}>
-            <button
-              type="button"
-              style={styles.secondaryBtn}
-              onClick={() => navigate("/vendas/registrar")}
-            >
-              Ir para vendas
-            </button>
-
             <button style={styles.btn} type="submit" disabled={carregando}>
-              {carregando ? "Salvando..." : "Salvar cliente"}
+              {carregando ? "Cadastrando..." : "Cadastrar-se agora"}
             </button>
           </div>
+
+          <p style={styles.footerText}>
+            Administradores são cadastrados apenas pelo back-end.
+          </p>
         </form>
       </section>
     </main>
@@ -331,26 +299,6 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: -2.5,
   },
 
-  heroText: {
-    margin: "22px 0 0",
-    color: "#fff2c6",
-    fontSize: 16,
-    lineHeight: 1.75,
-  },
-
-  infoBox: {
-    padding: 18,
-    borderRadius: 24,
-    background: "rgba(255,255,255,0.16)",
-    border: "1px solid rgba(255,244,198,0.32)",
-    color: "#fff7d6",
-    display: "flex",
-    flexDirection: "column",
-    gap: 5,
-    maxWidth: 340,
-    backdropFilter: "blur(12px)",
-  },
-
   formPanel: {
     padding: "40px 38px",
     background:
@@ -422,64 +370,11 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#2a1e0a",
   },
 
-  previewCard: {
-    padding: 18,
-    borderRadius: 24,
-    marginBottom: 18,
-    background:
-      "linear-gradient(135deg, rgba(212,175,55,0.16), rgba(255,255,255,0.68))",
-    border: "1px solid rgba(212,175,55,0.24)",
-    boxShadow: "0 16px 38px rgba(91,62,8,0.07)",
-  },
-
-  previewLabel: {
-    display: "block",
-    color: "#9f7928",
-    fontSize: 12,
-    fontWeight: 1000,
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-    marginBottom: 12,
-  },
-
-  previewContent: {
-    display: "flex",
-    alignItems: "center",
-    gap: 14,
-  },
-
-  avatar: {
-    width: 60,
-    height: 60,
-    minWidth: 60,
-    borderRadius: 20,
-    display: "grid",
-    placeItems: "center",
-    background:
-      "linear-gradient(135deg, #fff4bd 0%, #d4af37 46%, #9f7928 100%)",
-    color: "#241a08",
-    fontWeight: 1000,
-    fontSize: 25,
-    boxShadow: "0 14px 32px rgba(166,124,0,0.22)",
-  },
-
-  previewTitle: {
-    display: "block",
-    fontSize: 21,
-    color: "#2a1e0a",
-    marginBottom: 5,
-  },
-
-  previewText: {
-    margin: "3px 0",
-    color: "#7b6a42",
-    fontSize: 13,
-  },
-
   actions: {
     display: "flex",
     gap: 12,
     flexWrap: "wrap",
+    marginTop: 10,
   },
 
   btn: {
@@ -495,19 +390,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 1000,
     cursor: "pointer",
     boxShadow: "0 18px 45px rgba(166,124,0,0.24)",
-  },
-
-  secondaryBtn: {
-    flex: 1,
-    minWidth: 150,
-    padding: "15px 18px",
-    background: "rgba(255,255,255,0.78)",
-    color: "#5f4513",
-    border: "1px solid rgba(166,124,0,0.24)",
-    borderRadius: 999,
-    fontSize: 15,
-    fontWeight: 900,
-    cursor: "pointer",
   },
 
   errorBox: {
@@ -530,5 +412,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     marginBottom: 16,
     lineHeight: 1.5,
+  },
+
+  footerText: {
+    marginTop: 24,
+    textAlign: "center",
+    fontSize: 12,
+    color: "#9a8654",
+    fontStyle: "italic",
   },
 };

@@ -9,12 +9,15 @@ type ProdutoForm = {
   categoria: string;
   preco: string;
   descricao: string;
-  administradorId: string;
-  promocaoId: string;
+  imagemUrl: string;
 };
 
 export default function CadastroProduto() {
   const navigate = useNavigate();
+
+  const usuarioLogado = JSON.parse(
+    localStorage.getItem("usuarioLogado") || "null"
+  );
 
   const [form, setForm] = useState<ProdutoForm>({
     nome: "",
@@ -22,8 +25,7 @@ export default function CadastroProduto() {
     categoria: "",
     preco: "",
     descricao: "",
-    administradorId: "1",
-    promocaoId: "",
+    imagemUrl: "",
   });
 
   const [carregando, setCarregando] = useState(false);
@@ -45,21 +47,24 @@ export default function CadastroProduto() {
       categoria: "",
       preco: "",
       descricao: "",
-      administradorId: "1",
-      promocaoId: "",
+      imagemUrl: "",
     });
   }
 
   async function handleSalvar(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!usuarioLogado || !usuarioLogado.id) {
+      setErro("Sessão expirada. Faça login novamente.");
+      return;
+    }
+
     if (
       !form.nome ||
       !form.marca ||
       !form.categoria ||
       !form.preco ||
-      !form.descricao ||
-      !form.administradorId
+      !form.descricao
     ) {
       setErro("Preencha todos os campos obrigatórios.");
       setMensagem("");
@@ -87,8 +92,8 @@ export default function CadastroProduto() {
         marca: form.marca,
         preco: precoConvertido,
         descricao: form.descricao,
-        administradorId: Number(form.administradorId),
-        promocaoId: form.promocaoId ? Number(form.promocaoId) : null,
+        administradorId: usuarioLogado.id,
+        imagemUrl: form.imagemUrl,
       };
 
       const response = await fetch(`${API_URL}/produtos`, {
@@ -109,7 +114,7 @@ export default function CadastroProduto() {
     } catch (error) {
       console.error(error);
       setErro(
-        "Não foi possível cadastrar o produto. Verifique se o administradorId existe no banco."
+        "Não foi possível cadastrar o produto. Verifique a conexão com o servidor."
       );
     } finally {
       setCarregando(false);
@@ -119,8 +124,8 @@ export default function CadastroProduto() {
   return (
     <main style={styles.page}>
       <section style={styles.container}>
-        <div style={styles.leftPanel}>
-          <div style={styles.brandArea}>
+        <div style={form.imagemUrl ? styles.leftPanelImage : styles.leftPanel}>
+          <div style={styles.brandAreaOverlay}>
             <div style={styles.logo}>A</div>
 
             <div>
@@ -129,18 +134,30 @@ export default function CadastroProduto() {
             </div>
           </div>
 
-          <div>
-            <span style={styles.tag}>Cadastro de produto</span>
+          {!form.imagemUrl && (
+            <div style={styles.emptyState}>
+              <span style={styles.tag}>Cadastro de produto</span>
+              <h2 style={styles.heroTitle}>
+                Adicione novos itens ao catálogo da perfumaria.
+              </h2>
+            </div>
+          )}
 
-            <h2 style={styles.heroTitle}>
-              Adicione novos itens ao catálogo da perfumaria.
-            </h2>
+          {form.imagemUrl && (
+            <img
+              src={form.imagemUrl}
+              alt="Preview"
+              style={styles.fullImage}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src =
+                  "https://via.placeholder.com/600x800?text=Imagem+não+encontrada";
+              }}
+            />
+          )}
 
-           
-          </div>
-
-          <div style={styles.infoBox}>
-           
+          <div style={styles.infoBoxOverlay}>
+            <strong>Responsável:</strong>
+            <p>{usuarioLogado?.nome || "Indisponível"}</p>
           </div>
         </div>
 
@@ -224,27 +241,12 @@ export default function CadastroProduto() {
 
           <div style={styles.row}>
             <div style={styles.col}>
-              <label style={styles.label}>ID do administrador</label>
+              <label style={styles.label}>URL da Imagem</label>
               <input
                 style={styles.input}
-                name="administradorId"
-                type="number"
-                min="1"
-                placeholder="Ex: 1"
-                value={form.administradorId}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div style={styles.col}>
-              <label style={styles.label}>ID da promoção</label>
-              <input
-                style={styles.input}
-                name="promocaoId"
-                type="number"
-                min="1"
-                placeholder="Opcional"
-                value={form.promocaoId}
+                name="imagemUrl"
+                placeholder="https://exemplo.com/foto.jpg"
+                value={form.imagemUrl}
                 onChange={handleChange}
               />
             </div>
@@ -337,6 +339,57 @@ const styles: Record<string, React.CSSProperties> = {
     background:
       "linear-gradient(135deg, rgba(43,31,9,0.78), rgba(166,124,0,0.44)), url('https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1400&q=90') center/cover",
     color: "#fffaf0",
+    position: "relative",
+  },
+
+  leftPanelImage: {
+    padding: 46,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    background: "#000",
+    color: "#fffaf0",
+    position: "relative",
+    overflow: "hidden",
+  },
+
+  brandAreaOverlay: {
+    display: "flex",
+    alignItems: "center",
+    gap: 15,
+    position: "relative",
+    zIndex: 10,
+    textShadow: "0 2px 10px rgba(0,0,0,0.5)",
+  },
+
+  infoBoxOverlay: {
+    padding: 18,
+    borderRadius: 24,
+    background: "rgba(0,0,0,0.5)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    color: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    gap: 5,
+    maxWidth: 340,
+    backdropFilter: "blur(10px)",
+    position: "relative",
+    zIndex: 10,
+  },
+
+  emptyState: {
+    position: "relative",
+    zIndex: 10,
+  },
+
+  fullImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    zIndex: 1,
   },
 
   brandArea: {
@@ -371,6 +424,34 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "5px 0 0",
     color: "#fff0bd",
     fontSize: 13,
+  },
+
+  imageDropZone: {
+    width: "100%",
+    height: 320,
+    borderRadius: 24,
+    background: "rgba(255,255,255,0.12)",
+    border: "2px dashed rgba(255,244,198,0.30)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    marginTop: 20,
+    marginBottom: 20,
+  },
+
+  imagePreview: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+
+  dropZonePlaceholder: {
+    textAlign: "center",
+    color: "#fff0bd",
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
   },
 
   tag: {

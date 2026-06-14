@@ -40,16 +40,7 @@ export default function CatalogoCliente() {
         throw new Error("Resposta inválida da API.");
       }
 
-      const produtosConvertidos = data.map((produto: any, index) => {
-        const produtoBase = converterProdutoApi(produto, index);
-
-        return {
-          ...produtoBase,
-          promocao: produto.promocao || null,
-        };
-      });
-
-      setProdutos(produtosConvertidos);
+      setProdutos(data.map(converterProdutoApi));
     } catch (error) {
       console.error(error);
       setErro("Não foi possível carregar o catálogo. Verifique se o back-end está rodando.");
@@ -96,7 +87,18 @@ export default function CatalogoCliente() {
   }
 
   function temPromocao(produto: ProdutoComPromocao) {
-    return Number(produto.promocao?.desconto || 0) > 0;
+    const dias = calcularDiasRestantes(produto.promocao?.dataFim);
+    return Number(produto.promocao?.desconto || 0) > 0 && dias > 0;
+  }
+
+  function calcularDiasRestantes(dataFim?: string) {
+    if (!dataFim) return 0;
+    const fim = new Date(dataFim);
+    fim.setHours(23, 59, 59, 999);
+    const hoje = new Date();
+    const diffTime = fim.getTime() - hoje.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   }
 
   function enviarWhatsApp(produto: ProdutoComPromocao) {
@@ -253,9 +255,8 @@ export default function CatalogoCliente() {
                   {possuiPromocao && (
                     <div style={styles.promoInfo}>
                       <strong>{produto.promocao?.nome || "Promoção ativa"}</strong>
-                      <span>
-                        Válida de {produto.promocao?.dataInicio || "início"} até{" "}
-                        {produto.promocao?.dataFim || "fim"}
+                      <span style={{ color: '#d40000', fontWeight: 800 }}>
+                        ⏳ Acaba em {calcularDiasRestantes(produto.promocao?.dataFim)} dias
                       </span>
                     </div>
                   )}
@@ -267,9 +268,14 @@ export default function CatalogoCliente() {
                           {formatarPreco(produto.preco)}
                         </span>
 
-                        <strong style={styles.price}>
-                          {formatarPreco(promocional)}
-                        </strong>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                          <strong style={styles.price}>
+                            {formatarPreco(promocional)}
+                          </strong>
+                          <span style={styles.savingsLabel}>
+                            Economize {formatarPreco(produto.preco - promocional)}
+                          </span>
+                        </div>
                       </div>
                     ) : (
                       <strong style={styles.price}>
@@ -694,10 +700,9 @@ const styles: Record<string, React.CSSProperties> = {
 
   priceArea: {
     display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 14,
-    marginTop: 18,
+    flexDirection: "column",
+    gap: 16,
+    marginTop: 22,
   },
 
   oldPrice: {
@@ -706,24 +711,40 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: "line-through",
     fontSize: 14,
     marginBottom: 4,
+    lineHeight: 1,
   },
 
   price: {
     display: "block",
     color: "#2a1e0a",
-    fontSize: 24,
+    fontSize: 26,
+    lineHeight: 1,
+  },
+
+  savingsLabel: {
+    fontSize: 12,
+    color: "#166534",
+    fontWeight: 800,
+    background: "rgba(34,197,94,0.12)",
+    padding: "3px 8px",
+    borderRadius: 8,
+    whiteSpace: "nowrap",
+    marginTop: 4,
   },
 
   buyButton: {
+    width: "100%",
     border: "none",
     borderRadius: 999,
-    padding: "12px 16px",
+    padding: "15px 20px",
     background:
       "linear-gradient(135deg, #fff4bd 0%, #d4af37 46%, #9f7928 100%)",
     color: "#241a08",
     fontWeight: 1000,
     cursor: "pointer",
     whiteSpace: "nowrap",
+    boxShadow: "0 10px 25px rgba(166,124,0,0.15)",
+    fontSize: 15,
   },
 
   contact: {

@@ -69,6 +69,16 @@ export default function ListagemProdutos() {
     });
   }, [produtos, busca, categoria]);
 
+  function calcularDiasRestantes(dataFim?: string) {
+    if (!dataFim) return 0;
+    const fim = new Date(dataFim);
+    fim.setHours(23, 59, 59, 999);
+    const hoje = new Date();
+    const diffTime = fim.getTime() - hoje.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+
   return (
     <main style={styles.page}>
       <section style={styles.hero}>
@@ -156,44 +166,79 @@ export default function ListagemProdutos() {
         <div style={styles.warning}>Nenhum produto cadastrado no sistema.</div>
       ) : (
         <section style={styles.grid}>
-          {produtosFiltrados.map((produto) => (
-            <article key={produto.id} style={styles.card}>
-              <div style={styles.imageBox}>
-                <img
-                  src={produto.imagem}
-                  alt={produto.nome}
-                  style={styles.image}
-                />
+          {produtosFiltrados.map((produto) => {
+            const diasRestantes = calcularDiasRestantes(produto.promocao?.dataFim);
+            const promocaoAtiva = (produto.promocao?.desconto ?? 0) > 0 && diasRestantes > 0;
 
-                <div style={styles.imageOverlay}>
-                  <span>{produto.categoria}</span>
+            return (
+              <article key={produto.id} style={styles.card}>
+                <div style={styles.imageBox}>
+                  <img
+                    src={produto.imagem}
+                    alt={produto.nome}
+                    style={styles.image}
+                  />
+
+                  <div style={styles.imageOverlay}>
+                    <span>{produto.categoria}</span>
+                  </div>
+
+                  {promocaoAtiva && (
+                    <div style={styles.promoTag}>
+                      {produto.promocao?.desconto}% OFF
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              <div style={styles.content}>
-                <div style={styles.cardTop}>
-                  <span style={styles.category}>{produto.categoria}</span>
-                  <small style={styles.brand}>{produto.marca}</small>
+                <div style={styles.content}>
+                  <div style={styles.cardTop}>
+                    <span style={styles.category}>{produto.categoria}</span>
+                    <small style={styles.brand}>{produto.marca}</small>
+                  </div>
+
+                  <h2 style={styles.productName}>{produto.nome}</h2>
+                  <p style={styles.description}>{produto.descricao}</p>
+
+                  {promocaoAtiva && (
+                    <div style={styles.promoCountdown}>
+                      ⏳ Acaba em: <strong>{diasRestantes} dias</strong>
+                    </div>
+                  )}
+
+                  <div style={styles.footer}>
+                    <div style={styles.priceContainer}>
+                      {promocaoAtiva ? (
+                        <>
+                          <span style={styles.oldPrice}>
+                            {formatarPreco(produto.preco)}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                            <strong style={styles.promoPrice}>
+                              {formatarPreco(produto.preco * (1 - (produto.promocao?.desconto ?? 0) / 100))}
+                            </strong>
+                            <span style={styles.savings}>
+                              - {formatarPreco(produto.preco * ((produto.promocao?.desconto ?? 0) / 100))}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <strong style={styles.price}>
+                          {formatarPreco(produto.preco)}
+                        </strong>
+                      )}
+                    </div>
+
+                    <button
+                      style={styles.smallButton}
+                      onClick={() => navigate("/vendas/registrar")}
+                    >
+                      Vender
+                    </button>
+                  </div>
                 </div>
-
-                <h2 style={styles.productName}>{produto.nome}</h2>
-                <p style={styles.description}>{produto.descricao}</p>
-
-                <div style={styles.footer}>
-                  <strong style={styles.price}>
-                    {formatarPreco(produto.preco)}
-                  </strong>
-
-                  <button
-                    style={styles.smallButton}
-                    onClick={() => navigate("/vendas/registrar")}
-                  >
-                    Vender
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </section>
       )}
     </main>
@@ -474,25 +519,84 @@ const styles: Record<string, React.CSSProperties> = {
   footer: {
     marginTop: 22,
     display: "flex",
-    justifyContent: "space-between",
-    gap: 14,
-    alignItems: "center",
+    flexDirection: "column",
+    gap: 16,
   },
 
   price: {
-    fontSize: 23,
+    fontSize: 26,
     color: "#2a1e0a",
+    lineHeight: 1,
+  },
+
+  promoTag: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    padding: "8px 12px",
+    borderRadius: 999,
+    background: "linear-gradient(135deg, #ff4d4d 0%, #d40000 100%)",
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: 1000,
+    boxShadow: "0 8px 20px rgba(212,0,0,0.3)",
+    letterSpacing: 1,
+  },
+
+  promoCountdown: {
+    marginTop: 10,
+    padding: "8px 12px",
+    borderRadius: 12,
+    background: "rgba(212,175,55,0.08)",
+    border: "1px solid rgba(212,175,55,0.20)",
+    color: "#5f4513",
+    fontSize: 13,
+    display: "inline-block",
+  },
+
+  priceContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 5,
+  },
+
+  oldPrice: {
+    fontSize: 14,
+    color: "#9a8654",
+    textDecoration: "line-through",
+    lineHeight: 1,
+  },
+
+  promoPrice: {
+    fontSize: 28,
+    color: "#d40000",
+    fontWeight: 900,
+    lineHeight: 1,
+  },
+
+  savings: {
+    fontSize: 12,
+    color: "#166534",
+    fontWeight: 800,
+    background: "rgba(34,197,94,0.12)",
+    padding: "3px 8px",
+    borderRadius: 8,
+    whiteSpace: "nowrap",
+    display: "inline-block",
+    marginTop: 2,
   },
 
   smallButton: {
+    width: "100%",
     border: "none",
     borderRadius: 999,
-    padding: "11px 16px",
+    padding: "16px 20px",
     background:
       "linear-gradient(135deg, #fff4bd 0%, #d4af37 46%, #9f7928 100%)",
     color: "#241a08",
     fontWeight: 1000,
     cursor: "pointer",
     boxShadow: "0 14px 32px rgba(166,124,0,0.20)",
+    fontSize: 15,
   },
 };

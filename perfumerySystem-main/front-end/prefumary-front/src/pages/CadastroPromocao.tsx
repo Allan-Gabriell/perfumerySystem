@@ -296,12 +296,15 @@ export default function CadastroPromocao() {
   }
 
   const produtoSelecionado = buscarProdutoSelecionado();
+  const descontoNum = Number(form.desconto) || 0;
+  const precoOriginal = produtoSelecionado?.preco || 0;
+  const precoComDesconto = precoOriginal - (precoOriginal * descontoNum / 100);
 
   return (
     <main style={styles.page}>
       <section style={styles.container}>
-        <div style={styles.leftPanel}>
-          <div style={styles.brandArea}>
+        <div style={produtoSelecionado?.imagemUrl ? styles.leftPanelImage : styles.leftPanel}>
+          <div style={styles.brandAreaOverlay}>
             <div style={styles.logo}>%</div>
 
             <div>
@@ -310,22 +313,26 @@ export default function CadastroPromocao() {
             </div>
           </div>
 
-          <div>
-            <span style={styles.tag}>Cadastro de promoção</span>
+          {!produtoSelecionado?.imagemUrl && (
+            <div style={styles.emptyState}>
+              <span style={styles.tag}>Cadastro de promoção</span>
+              <h2 style={styles.heroTitle}>
+                Crie descontos e vincule diretamente a um produto.
+              </h2>
+            </div>
+          )}
 
-            <h2 style={styles.heroTitle}>
-              Crie descontos e vincule diretamente a um produto.
-            </h2>
+          {produtoSelecionado?.imagemUrl && (
+            <img
+              src={produtoSelecionado.imagemUrl}
+              alt="Preview"
+              style={styles.fullImage}
+            />
+          )}
 
-            <p style={styles.heroText}>
-              A promoção será associada ao gerente logado e aplicada ao produto
-              escolhido, sem necessidade de digitar ID manualmente.
-            </p>
-          </div>
-
-          <div style={styles.infoBox}>
-            <span>Gerente responsável</span>
-            <strong>{usuarioLogado?.nome || "Não identificado"}</strong>
+          <div style={styles.infoBoxOverlay}>
+            <strong>Gerente:</strong>
+            <p>{usuarioLogado?.nome || "Indisponível"}</p>
           </div>
         </div>
 
@@ -429,35 +436,32 @@ export default function CadastroPromocao() {
             </div>
           </div>
 
-          <div style={styles.previewCard}>
-            <span style={styles.previewLabel}>Prévia da campanha</span>
+          {produtoSelecionado && (
+            <div style={styles.previewCard}>
+              <span style={styles.previewLabel}>Resumo de Preços</span>
 
-            <div style={styles.previewContent}>
-              <div>
-                <strong style={styles.previewTitle}>
-                  {form.nome || "Nome da promoção"}
-                </strong>
+              <div style={styles.previewContent}>
+                <div>
+                  <strong style={styles.previewTitle}>
+                    {produtoSelecionado.nome}
+                  </strong>
 
-                <p style={styles.previewText}>
-                  Produto: {produtoSelecionado?.nome || "Nenhum produto selecionado"}
-                </p>
+                  <p style={{ ...styles.previewText, color: '#9a8654' }}>
+                    Preço Original: <s>R$ {precoOriginal.toFixed(2)}</s>
+                  </p>
 
-                <p style={styles.previewText}>
-                  Gerente responsável: {usuarioLogado?.nome || "Não identificado"}
-                </p>
+                  <p style={{ ...styles.previewText, color: '#166534', fontSize: 18, fontWeight: 800 }}>
+                    Preço com Desconto: R$ {precoComDesconto.toFixed(2)}
+                  </p>
+                </div>
 
-                <p style={styles.previewText}>
-                  {form.dataInicio || "Data inicial"} até{" "}
-                  {form.dataFim || "Data final"}
-                </p>
-              </div>
-
-              <div style={styles.discountBadge}>
-                <strong>{form.desconto || "0"}%</strong>
-                <small>OFF</small>
+                <div style={styles.discountBadge}>
+                  <strong>{form.desconto || "0"}%</strong>
+                  <small>OFF</small>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div style={styles.actions}>
             <button
@@ -513,6 +517,57 @@ const styles: Record<string, React.CSSProperties> = {
     background:
       "linear-gradient(135deg, rgba(43,31,9,0.78), rgba(166,124,0,0.46)), url('https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1400&q=90') center/cover",
     color: "#fffaf0",
+    position: "relative",
+  },
+
+  leftPanelImage: {
+    padding: 46,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    background: "#000",
+    color: "#fffaf0",
+    position: "relative",
+    overflow: "hidden",
+  },
+
+  brandAreaOverlay: {
+    display: "flex",
+    alignItems: "center",
+    gap: 15,
+    position: "relative",
+    zIndex: 10,
+    textShadow: "0 2px 10px rgba(0,0,0,0.5)",
+  },
+
+  infoBoxOverlay: {
+    padding: 18,
+    borderRadius: 24,
+    background: "rgba(0,0,0,0.5)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    color: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    gap: 5,
+    maxWidth: 340,
+    backdropFilter: "blur(10px)",
+    position: "relative",
+    zIndex: 10,
+  },
+
+  emptyState: {
+    position: "relative",
+    zIndex: 10,
+  },
+
+  fullImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    zIndex: 1,
   },
 
   brandArea: {

@@ -3,6 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import CadastroCliente from "./pages/CadastroCliente";
+import CadastroVendedor from "./pages/CadastroVendedor";
+import CadastroGerente from "./pages/CadastroGerente";
 import CadastroProduto from "./pages/CadastroProduto";
 import CadastroPromocao from "./pages/CadastroPromocao";
 import HistoricoCompras from "./pages/HistoricoCompras";
@@ -21,8 +23,17 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         <Route path="/login" element={<Login />} />
-        <Route path="/registro-cliente" element={<CadastroCliente />} />
-        <Route path="/catalogo" element={<CatalogoCliente />} />
+        <Route path="/registro-vendedor" element={<CadastroVendedor />} />
+        <Route path="/registro-gerente" element={<CadastroGerente />} />
+
+        <Route
+          path="/catalogo"
+          element={
+            <ProtectedRoute allowed={["ADMIN", "GERENTE", "VENDEDOR", "CLIENTE"]}>
+              <CatalogoCliente />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/dashboard"
@@ -62,6 +73,15 @@ export default function App() {
 
         <Route
           path="/clientes/cadastrar"
+          element={
+            <ProtectedRoute allowed={["ADMIN", "VENDEDOR"]}>
+              <CadastroCliente />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/registro-cliente"
           element={
             <ProtectedRoute allowed={["ADMIN", "VENDEDOR"]}>
               <CadastroCliente />
@@ -110,8 +130,8 @@ export default function App() {
             <ProtectedRoute allowed={["ADMIN", "GERENTE"]}>
               <AreaAdministracao />
             </ProtectedRoute>
-  }
-/>
+          }
+        />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

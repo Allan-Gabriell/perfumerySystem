@@ -61,9 +61,13 @@ export default function AreaAdministracao() {
           <h1 style={styles.title}>Administração</h1>
 
           <p style={styles.subtitle}>
-            Área destinada ao administrador e ao gerente para controle de
+            Área destinada ao gerente para controle de
             produtos, promoções e relatórios do sistema.
           </p>
+
+          <div style={styles.adminNotification}>
+            <strong>Nota Importante:</strong> Administradores são cadastrados apenas pelo back-end.
+          </div>
         </div>
 
         <button style={styles.secondaryButton} onClick={() => navigate("/dashboard")}>
@@ -164,6 +168,18 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#7b6a42",
     fontSize: 17,
     lineHeight: 1.7,
+  },
+
+  adminNotification: {
+    marginTop: 20,
+    padding: "12px 18px",
+    borderRadius: 16,
+    background: "rgba(212,175,55,0.15)",
+    border: "1px solid rgba(212,175,55,0.30)",
+    color: "#5f4513",
+    fontSize: 14,
+    lineHeight: 1.5,
+    display: "inline-block",
   },
 
   secondaryButton: {

@@ -24,6 +24,7 @@ export default function RegistroVenda() {
   const [numeroVenda, setNumeroVenda] = useState(0);
   const [carregandoProdutos, setCarregandoProdutos] = useState(true);
   const [salvandoVenda, setSalvandoVenda] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [clientes, setClientes] = useState<{ id: number; nome: string }[]>(
@@ -100,15 +101,32 @@ export default function RegistroVenda() {
     });
   }, [produtos, busca]);
 
-  const subtotal = useMemo(() => {
-    return carrinho.reduce(
-      (total, item) => total + item.produto.preco * item.quantidade,
-      0
-    );
+  function calcularDiasRestantes(dataFim?: string) {
+    if (!dataFim) return 0;
+    const fim = new Date(dataFim);
+    fim.setHours(23, 59, 59, 999);
+    const hoje = new Date();
+    const diffTime = fim.getTime() - hoje.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+
+  const subtotalBruto = useMemo(() => {
+    return carrinho.reduce((total, item) => total + item.produto.preco * item.quantidade, 0);
   }, [carrinho]);
 
-  const desconto = subtotal >= 250 ? subtotal * 0.15 : 0;
-  const total = subtotal - desconto;
+  const totalDesconto = useMemo(() => {
+    return carrinho.reduce((total, item) => {
+      const dias = calcularDiasRestantes(item.produto.promocao?.dataFim);
+      const descontoItem = (item.produto.promocao?.desconto && dias > 0)
+        ? item.produto.preco * (item.produto.promocao.desconto / 100)
+        : 0;
+      
+      return total + descontoItem * item.quantidade;
+    }, 0);
+  }, [carrinho]);
+
+  const total = subtotalBruto - totalDesconto;
 
   function adicionarAoCarrinho(produto: Produto) {
     setCarrinho((itens) => {
@@ -194,15 +212,11 @@ export default function RegistroVenda() {
         throw new Error(respostaErro || "Erro ao registrar venda.");
       }
 
-      setMensagem(
-        `Venda #${numeroVenda} registrada com sucesso. Total: ${formatarPreco(
-          total
-        )}`
-      );
-
+      setShowSuccessModal(true);
       setNumeroVenda((numero) => numero + 1);
       setCarrinho([]);
       setBusca("");
+      setClienteId("");
     } catch (error) {
       console.error(error);
       setErro(
@@ -257,6 +271,21 @@ export default function RegistroVenda() {
       {erro && <div style={styles.errorBox}>{erro}</div>}
       {mensagem && <div style={styles.successBox}>{mensagem}</div>}
 
+      {showSuccessModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.successCard}>
+            <div style={styles.successIcon}>✓</div>
+            <h2 style={styles.successTitle}>Venda realizada com sucesso!</h2>
+            <button 
+              style={styles.modalButton} 
+              onClick={() => setShowSuccessModal(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <section style={styles.layout}>
         <div style={styles.panel}>
           <div style={styles.panelHeader}>
@@ -287,38 +316,61 @@ export default function RegistroVenda() {
             <div style={styles.empty}>Nenhum produto encontrado.</div>
           ) : (
             <div style={styles.productList}>
-              {produtosFiltrados.map((produto) => (
-                <article key={produto.id} style={styles.productRow}>
-                  <div style={styles.productInfo}>
-                    <div style={styles.productImageBox}>
-                      <img
-                        src={produto.imagem}
-                        alt={produto.nome}
-                        style={styles.productImage}
-                      />
+              {produtosFiltrados.map((produto) => {
+                const diasRestantes = calcularDiasRestantes(produto.promocao?.dataFim);
+                const promocaoAtiva = (produto.promocao?.desconto ?? 0) > 0 && diasRestantes > 0;
+
+                return (
+                  <article key={produto.id} style={styles.productRow}>
+                    <div style={styles.productInfo}>
+                      <div style={styles.productImageBox}>
+                        <img
+                          src={produto.imagem}
+                          alt={produto.nome}
+                          style={styles.productImage}
+                        />
+                        {promocaoAtiva && (
+                          <div style={styles.miniPromoFlag}>
+                            {produto.promocao?.desconto}%
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <strong style={styles.productName}>{produto.nome}</strong>
+
+                        <p style={styles.productMeta}>
+                          {produto.categoria} · {produto.marca}
+                        </p>
+
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          {promocaoAtiva ? (
+                            <>
+                              <span style={{ ...styles.productPrice, color: '#d40000' }}>
+                                {formatarPreco(produto.preco * (1 - (produto.promocao?.desconto ?? 0) / 100))}
+                              </span>
+                              <span style={{ fontSize: 11, textDecoration: 'line-through', color: '#9a8654' }}>
+                                {formatarPreco(produto.preco)}
+                              </span>
+                            </>
+                          ) : (
+                            <span style={styles.productPrice}>
+                              {formatarPreco(produto.preco)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <strong style={styles.productName}>{produto.nome}</strong>
-
-                      <p style={styles.productMeta}>
-                        {produto.categoria} · {produto.marca}
-                      </p>
-
-                      <span style={styles.productPrice}>
-                        {formatarPreco(produto.preco)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    style={styles.smallButton}
-                    onClick={() => adicionarAoCarrinho(produto)}
-                  >
-                    Adicionar
-                  </button>
-                </article>
-              ))}
+                    <button
+                      style={styles.smallButton}
+                      onClick={() => adicionarAoCarrinho(produto)}
+                    >
+                      Adicionar
+                    </button>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>
@@ -412,17 +464,17 @@ export default function RegistroVenda() {
 
           <div style={styles.summary}>
             <div style={styles.summaryLine}>
-              <span>Subtotal</span>
-              <strong>{formatarPreco(subtotal)}</strong>
+              <span>Subtotal bruto</span>
+              <strong>{formatarPreco(subtotalBruto)}</strong>
             </div>
 
             <div style={styles.summaryLine}>
-              <span>Desconto automático</span>
-              <strong>{formatarPreco(desconto)}</strong>
+              <span style={{ color: '#166534', fontWeight: 800 }}>Desconto das promoções</span>
+              <strong style={{ color: '#166534' }}>- {formatarPreco(totalDesconto)}</strong>
             </div>
 
             <div style={styles.totalLine}>
-              <span>Total</span>
+              <span>Total final</span>
               <strong>{formatarPreco(total)}</strong>
             </div>
           </div>
@@ -685,6 +737,20 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 18,
     overflow: "hidden",
     background: "#f7f1df",
+    position: "relative",
+  },
+
+  miniPromoFlag: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    background: "linear-gradient(135deg, #ff4d4d 0%, #d40000 100%)",
+    color: "#fff",
+    fontSize: 9,
+    fontWeight: 1000,
+    padding: "2px 4px",
+    borderBottomLeftRadius: 8,
+    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
   },
 
   productImage: {
@@ -872,5 +938,62 @@ const styles: Record<string, React.CSSProperties> = {
     background: "rgba(34,197,94,0.10)",
     border: "1px solid rgba(34,197,94,0.24)",
     color: "#166534",
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0, 0, 0, 0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+
+  successCard: {
+    background: "#fff",
+    padding: "40px 60px",
+    borderRadius: 32,
+    textAlign: "center",
+    boxShadow: "0 40px 100px rgba(0,0,0,0.2)",
+    maxWidth: 400,
+    width: "90%",
+  },
+
+  successIcon: {
+    width: 80,
+    height: 80,
+    background: "linear-gradient(135deg, #4ade80 0%, #166534 100%)",
+    color: "#fff",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 40,
+    margin: "0 auto 24px",
+    boxShadow: "0 15px 30px rgba(74,222,128,0.3)",
+  },
+
+  successTitle: {
+    fontSize: 24,
+    color: "#2a1e0a",
+    marginBottom: 32,
+    fontWeight: 800,
+  },
+
+  modalButton: {
+    padding: "14px 40px",
+    borderRadius: 999,
+    border: "none",
+    background: "linear-gradient(135deg, #fff4bd 0%, #d4af37 46%, #9f7928 100%)",
+    color: "#241a08",
+    fontWeight: 1000,
+    cursor: "pointer",
+    fontSize: 16,
+    boxShadow: "0 10px 25px rgba(166,124,0,0.2)",
   },
 };

@@ -93,6 +93,14 @@ export default function Login() {
       return;
     }
 
+    if (usuario.includes("@")) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(usuario.trim())) {
+        setErro("Formato de e-mail inválido.");
+        return;
+      }
+    }
+
     // validações básicas de formulário
 
     try {
@@ -117,6 +125,17 @@ export default function Login() {
 
       if (!usuarioEncontrado) {
         setErro("Usuário, senha ou nível de acesso inválido.");
+        return;
+      }
+
+      // Validação de acesso por aba selecionada
+      if (tipoEntrada === "dashboard" && usuarioEncontrado.nivel !== "VENDEDOR") {
+        setErro("Acesso negado. Administradores e Gerentes devem entrar pela Área Administrativa.");
+        return;
+      }
+
+      if (tipoEntrada === "administracao" && usuarioEncontrado.nivel === "VENDEDOR") {
+        setErro("Acesso negado. Vendedores devem entrar pelo painel de Vendedores.");
         return;
       }
 
@@ -269,7 +288,13 @@ export default function Login() {
 
               <button
                 type="button"
-                onClick={() => navigate("/registro-cliente")}
+                onClick={() =>
+                  navigate(
+                    tipoEntrada === "dashboard"
+                      ? "/registro-vendedor"
+                      : "/registro-gerente"
+                  )
+                }
                 style={{
                   marginTop: 12,
                   width: "100%",
@@ -282,7 +307,9 @@ export default function Login() {
                   cursor: "pointer",
                 }}
               >
-                Clique aqui para cadastrar-se
+                {tipoEntrada === "dashboard"
+                  ? "Clique aqui para cadastrar-se como Vendedor"
+                  : "Clique aqui para cadastrar-se como Gerente"}
               </button>
             </form>
 
